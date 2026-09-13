@@ -1,6 +1,6 @@
 // Alza il numero di versione a ogni deploy: forza l'aggiornamento sui telefoni
 // dove l'app è già installata.
-const CACHE = 'grandline-v3';
+const CACHE = 'grandline-v4';
 const FILES = ['./', './index.html', './manifest.json',
                './icon-192.png', './icon-512.png', './icon-maskable-512.png'];
 

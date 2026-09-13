@@ -66,6 +66,9 @@ canvas{display:block;position:fixed;inset:0;width:100%;height:100%}
   image-rendering:auto}
 .card::after{content:'';position:absolute;inset:0;z-index:1;
   background:linear-gradient(180deg,transparent 52%,rgba(6,20,28,.9) 100%)}
+.card .tag{position:absolute;z-index:2;top:4px;right:4px;font-size:7px;font-weight:800;letter-spacing:.06em;
+  padding:2px 4px;border-radius:4px;background:rgba(5,18,25,.8);border:1px solid rgba(239,220,180,.3)}
+.card .tag.cac{color:#ff9e7a} .card .tag.med{color:#ffd36e} .card .tag.lun{color:#8fe3ff} .card .tag.are{color:#ffb1f0}
 .card .nm{position:relative;z-index:2;font-size:9.5px;font-weight:800;text-align:center;line-height:1.05;
   text-shadow:0 1px 3px #000;letter-spacing:.01em}
 .card .cost{position:absolute;z-index:2;top:3px;left:3px;width:19px;height:19px;border-radius:50%;
@@ -212,18 +215,18 @@ const SHIP_SIDE_Z = 11.5, SHIP_FLAG_Z = 15.0;
 /* --------------------------- 2. DATI DELLE CARTE ----------------------- */
 // kind: 'unit' | 'spell'   targets: 'any' | 'navi'
 const CARDS = [
-  {id:0,name:'Rufy',       icon:'👒',cost:5,kind:'unit',n:1,hp:1500,dmg:135,rng:2.4,atk:1.1,spd:2.0,targets:'any',  r:.55,col:0xd8483a,acc:0xf2e2b0,hat:true,  size:1.05},
-  {id:1,name:'Zoro',       icon:'⚔️',cost:4,kind:'unit',n:1,hp:980, dmg:170,rng:1.7,atk:.85,spd:2.2,targets:'any',  r:.5, col:0x2f7d4f,acc:0x14512f,          size:1.0},
-  {id:2,name:'Sanji',      icon:'🦵',cost:3,kind:'unit',n:1,hp:720, dmg:115,rng:1.6,atk:.75,spd:3.1,targets:'any',  r:.45,col:0x1b1f2a,acc:0xe8c45a,          size:.95},
-  {id:3,name:'Nami',       icon:'⚡',cost:3,kind:'unit',n:1,hp:420, dmg:90, rng:4.6,atk:1.2,spd:2.0,targets:'any',  r:.42,col:0xe0762a,acc:0xf3a94a,shoot:true,splash:1.4,size:.92},
-  {id:4,name:'Usop',       icon:'🎯',cost:3,kind:'unit',n:1,hp:360, dmg:105,rng:5.6,atk:1.5,spd:1.9,targets:'any',  r:.42,col:0x8b5a2b,acc:0xd9c25a,shoot:true,size:.92},
-  {id:5,name:'Franky',     icon:'🤖',cost:6,kind:'unit',n:1,hp:2300,dmg:210,rng:1.9,atk:1.4,spd:1.25,targets:'navi',r:.7, col:0x2a6fb0,acc:0x9fd3f0,          size:1.25},
-  {id:6,name:'Ciurma',     icon:'🏴‍☠️',cost:2,kind:'unit',n:4,hp:230,dmg:60,rng:1.5,atk:.9,spd:2.4,targets:'any',  r:.38,col:0x7a4a2a,acc:0xd0b48a,          size:.8},
+  {id:0,name:'Rufy',       icon:'👒',cost:5,kind:'unit',n:1,hp:1500,dmg:135,rng:2.6,atk:1.1,spd:2.0,targets:'any',  r:.55,col:0xd8483a,acc:0xf2e2b0,hat:true,  size:1.05},
+  {id:1,name:'Zoro',       icon:'⚔️',cost:4,kind:'unit',n:1,hp:980, dmg:170,rng:0.9,atk:.85,spd:2.2,targets:'any',  r:.5, col:0x2f7d4f,acc:0x14512f,          size:1.0},
+  {id:2,name:'Sanji',      icon:'🦵',cost:3,kind:'unit',n:1,hp:720, dmg:115,rng:0.9,atk:.75,spd:3.1,targets:'any',  r:.45,col:0x1b1f2a,acc:0xe8c45a,          size:.95},
+  {id:3,name:'Nami',       icon:'⚡',cost:3,kind:'unit',n:1,hp:420, dmg:90, rng:4.0,atk:1.2,spd:2.0,targets:'any',  r:.42,col:0xe0762a,acc:0xf3a94a,shoot:true,splash:1.4,size:.92},
+  {id:4,name:'Usop',       icon:'🎯',cost:3,kind:'unit',n:1,hp:360, dmg:105,rng:6.0,atk:1.5,spd:1.9,targets:'any',  r:.42,col:0x8b5a2b,acc:0xd9c25a,shoot:true,size:.92},
+  {id:5,name:'Franky',     icon:'🤖',cost:6,kind:'unit',n:1,hp:2300,dmg:210,rng:1.1,atk:1.4,spd:1.25,targets:'navi',r:.7, col:0x2a6fb0,acc:0x9fd3f0,          size:1.25},
+  {id:6,name:'Ciurma',     icon:'🏴‍☠️',cost:2,kind:'unit',n:4,hp:230,dmg:60,rng:0.85,atk:.9,spd:2.4,targets:'any',  r:.38,col:0x7a4a2a,acc:0xd0b48a,          size:.8},
   {id:7,name:'Pugno di Fuoco',icon:'🔥',cost:4,kind:'spell',dmg:340,srad:3.0,navi:.35},
   /* riserve: scambiale dentro DECK quando vuoi cambiare mazzo */
-  {id:8,name:'Chopper',    icon:'🦌',cost:3,kind:'unit',n:1,hp:1250,dmg:75, rng:1.6,atk:1.0,spd:1.7,targets:'any',  r:.55,col:0xc06a4a,acc:0xf0d8b0,          size:.9},
-  {id:9,name:'Brook',      icon:'🎻',cost:4,kind:'unit',n:3,hp:300,dmg:80, rng:1.6,atk:.8,spd:3.2,targets:'any',  r:.4, col:0x2b2b38,acc:0xf0efe6,          size:1.0},
-  {id:10,name:'Robin',     icon:'🖐️',cost:4,kind:'unit',n:2,hp:440,dmg:95, rng:4.2,atk:1.1,spd:2.0,targets:'any',  r:.42,col:0x4a2f6b,acc:0xb99adf,shoot:true,size:.95},
+  {id:8,name:'Chopper',    icon:'🦌',cost:3,kind:'unit',n:1,hp:1250,dmg:75, rng:0.95,atk:1.0,spd:1.7,targets:'any',  r:.55,col:0xc06a4a,acc:0xf0d8b0,          size:.9},
+  {id:9,name:'Brook',      icon:'🎻',cost:4,kind:'unit',n:3,hp:300,dmg:80, rng:0.9,atk:.8,spd:3.2,targets:'any',  r:.4, col:0x2b2b38,acc:0xf0efe6,          size:1.0},
+  {id:10,name:'Robin',     icon:'🖐️',cost:4,kind:'unit',n:2,hp:440,dmg:95, rng:4.0,atk:1.1,spd:2.0,targets:'any',  r:.42,col:0x4a2f6b,acc:0xb99adf,shoot:true,size:.95},
   {id:11,name:'Fulmine',   icon:'🌩️',cost:2,kind:'spell',dmg:150,srad:2.5,navi:.4}
 ];
 const DECK = [0,1,2,3,4,5,6,7];   // le 8 carte in gioco
@@ -375,9 +378,22 @@ function buildArena(){
   }
 }
 
+// griglia a quadretti: un quadretto = 1 unità di campo, come le caselle di Clash Royale
+const GRID=[null,null];
+function buildGridHalf(sign){
+  const v=[], y=.19, z0=RIVER+.1, z1=ARENA_Z-.35, x0=-ARENA_W/2+.3, x1=ARENA_W/2-.3;
+  for(let x=Math.ceil(x0);x<=Math.floor(x1);x++) v.push(x,y,sign*z0, x,y,sign*z1);
+  for(let z=Math.ceil(z0);z<=Math.floor(z1);z++) v.push(x0,y,sign*z, x1,y,sign*z);
+  const geo=new THREE.BufferGeometry();
+  geo.setAttribute('position',new THREE.Float32BufferAttribute(v,3));
+  const mat=new THREE.LineBasicMaterial({color:0xffffff,transparent:true,opacity:.13,depthWrite:false});
+  const ls=new THREE.LineSegments(geo,mat); scene.add(ls); return ls;
+}
+
 // area di schieramento: si accende quando scegli una carta
 let zoneMesh=null;
 function buildDeployZone(){
+  GRID[0]=buildGridHalf(1); GRID[1]=buildGridHalf(-1);
   const len=ARENA_Z-RIVER;
   const g=new THREE.Group();
   const fill=new THREE.Mesh(gPlane(ARENA_W-.6,len-.6),
@@ -385,13 +401,19 @@ function buildDeployZone(){
   fill.rotation.x=-Math.PI/2; g.add(fill);
   const edge=new THREE.Mesh(gPlane(ARENA_W-.6,.12),new THREE.MeshBasicMaterial({color:0x9ffff0,transparent:true,opacity:.55,depthWrite:false}));
   edge.rotation.x=-Math.PI/2; edge.position.z=-(len/2); g.add(edge);
-  g.position.y=.22; g.visible=false;
+  g.position.y=.21; g.visible=false;
   g.userData={fill,edge,len};
   scene.add(g); zoneMesh=g;
 }
 function updateDeployZone(et){
   if(!zoneMesh) return;
   const on=G.phase==='play'&&G.sel>=0;
+  // la griglia della tua metà si accende quando hai una carta in mano pronta
+  if(GRID[0]&&GRID[1]){
+    const mine=G.me===0?0:1;
+    GRID[mine].material.opacity=on?.34:.15;
+    GRID[1-mine].material.opacity=.10;
+  }
   zoneMesh.visible=on;
   if(!on) return;
   const len=zoneMesh.userData.len, s=sideSign(G.me);
@@ -406,7 +428,7 @@ function updateDeployZone(et){
 function shipMesh(team,kind){
   const g=new THREE.Group();
   const big=kind==='flag';
-  const L=big?5.1:3.6, W=big?2.2:1.55, H=big?1.15:.82;
+  const L=big?3.5:2.5, W=big?1.5:1.05, H=big?.8:.56;
   const wood=big?0x6a3d1f:0x8a5a32, wood2=big?0x8b5a2e:0xa7743f;
   const teamCol=team===0?0x2fb3a3:0xc24534;
   const hull=new THREE.Group(); g.add(hull); g.userData.hull=hull;
@@ -433,7 +455,7 @@ function shipMesh(team,kind){
   }
 
   // alberi e vele
-  const masts=big?[[0,L*.12,2.7,2.0],[0,-L*.3,2.1,1.5]]:[[0,L*.05,2.2,1.7]];
+  const masts=big?[[0,L*.12,1.9,1.4],[0,-L*.3,1.5,1.05]]:[[0,L*.05,1.5,1.15]];
   masts.forEach((m,i)=>{
     const [mx,mz,mh,sw]=m;
     part(gCyl(.12,.16,mh*1.8,7),M(0x7a5330),mx,H+mh*.9,mz,hull);
@@ -635,24 +657,34 @@ function resize(){
   const w=innerWidth,h=innerHeight;
   renderer.setSize(w,h,false);
   camera.aspect=w/h;
+  const a=THREE.MathUtils.degToRad(54);
   const vhalf=Math.tan(THREE.MathUtils.degToRad(camera.fov/2));
   const hhalf=vhalf*camera.aspect;
-  const dW=(ARENA_W/2+1.6)/hhalf;
-  const dV=12.5/vhalf;
-  const D=clamp(Math.max(dW,dV),26,64);
-  const a=THREE.MathUtils.degToRad(54);
+
+  // la HUD mangia schermo: sopra la barra tempo, sotto elisir e carte.
+  // il campo deve entrare tutto nella fascia libera, altrimenti l'ammiraglia
+  // finisce dietro le carte.
+  const topFrac=w/h<1?.10:.13, botFrac=w/h<1?.27:.22;
+  const band=1-topFrac-botFrac;
+  const halfV=(ARENA_Z+1.2)*Math.sin(a);        // estensione verticale apparente del campo
+  const dV=(halfV/band)/vhalf;
+  const dW=(ARENA_W/2+1.0)/hhalf;
+  const D=clamp(Math.max(dW,dV),26,90);
+
   const s=sideSign(G.me);
+  // sposto il centro dell'immagine verso di me di quanto la HUD è sbilanciata
+  const shift=((botFrac-topFrac)/2)*(2*D*vhalf)/Math.sin(a);
   camera.position.set(0,D*Math.sin(a),s*D*Math.cos(a));
-  camera.lookAt(0,0,s*1.5);
+  camera.lookAt(0,0,s*shift);
   camera.updateProjectionMatrix();
 }
 
 /* ------------------------- 5. AVVIO DELLA PARTITA ---------------------- */
 function newTower(team,kind,x,z){
   return {team,kind,x,z,
-    hp: kind==='flag'?4200:2800, max: kind==='flag'?4200:2800,
-    dmg: kind==='flag'?130:105, rng: kind==='flag'?8.6:8.0, atk:.8, cd:0,
-    r: kind==='flag'?1.5:1.1,
+    hp: kind==='flag'?3600:2400, max: kind==='flag'?3600:2400,
+    dmg: kind==='flag'?90:70, rng: kind==='flag'?9.8:10.8, atk:.8, cd:0,
+    r: kind==='flag'?.95:.75,
     active: kind!=='flag', alive:true, mesh:null, bar:null};
 }
 
@@ -671,8 +703,8 @@ function resetMatch(){
       t.mesh=shipMesh(team,k);
       t.mesh.position.set(t.x,0,t.z);
       t.mesh.rotation.y = team===0?Math.PI:0;
-      t.bar=makeBar(k==='flag'?2.6:2.0, team===G.me?0x49e3a4:0xf06a4e);
-      t.bar.position.set(t.x,k==='flag'?3.1:2.5,t.z); scene.add(t.bar);
+      t.bar=makeBar(k==='flag'?2.0:1.6, team===G.me?0x49e3a4:0xf06a4e);
+      t.bar.position.set(t.x,k==='flag'?2.5:2.0,t.z); scene.add(t.bar);
       setBar(t.bar,1,team);
       G.towers.push(t);
     });
@@ -1349,8 +1381,13 @@ function portrait(id){
 }
 
 function cardHTML(card){
+  const t = card.kind==='spell' ? ['are','AREA']
+          : card.rng<1.4 ? ['cac','CaC']
+          : card.rng<5   ? ['med','MEDIA'] : ['lun','LUNGA'];
   return '<div class="art" style="background-image:url('+portrait(card.id)+')"></div>'+
-         '<div class="cost">'+card.cost+'</div><div class="nm">'+card.name+'</div>';
+         '<div class="cost">'+card.cost+'</div>'+
+         '<div class="tag '+t[0]+'">'+t[1]+'</div>'+
+         '<div class="nm">'+card.name+'</div>';
 }
 function renderCards(){
   const hand=G.hand[G.me];
