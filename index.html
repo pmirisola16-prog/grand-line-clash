@@ -215,15 +215,15 @@ const CARDS = [
   {id:0,name:'Rufy',       icon:'👒',cost:5,kind:'unit',n:1,hp:1500,dmg:135,rng:2.4,atk:1.1,spd:2.0,targets:'any',  r:.55,col:0xd8483a,acc:0xf2e2b0,hat:true,  size:1.05},
   {id:1,name:'Zoro',       icon:'⚔️',cost:4,kind:'unit',n:1,hp:980, dmg:170,rng:1.7,atk:.85,spd:2.2,targets:'any',  r:.5, col:0x2f7d4f,acc:0x14512f,          size:1.0},
   {id:2,name:'Sanji',      icon:'🦵',cost:3,kind:'unit',n:1,hp:720, dmg:115,rng:1.6,atk:.75,spd:3.1,targets:'any',  r:.45,col:0x1b1f2a,acc:0xe8c45a,          size:.95},
-  {id:3,name:'Nami',       icon:'⚡',cost:3,kind:'unit',n:1,hp:420, dmg:90, rng:6.5,atk:1.2,spd:2.0,targets:'any',  r:.42,col:0xe0762a,acc:0xf3a94a,shoot:true,splash:1.4,size:.92},
-  {id:4,name:'Usop',       icon:'🎯',cost:3,kind:'unit',n:1,hp:360, dmg:105,rng:8.2,atk:1.5,spd:1.9,targets:'any',  r:.42,col:0x8b5a2b,acc:0xd9c25a,shoot:true,size:.92},
+  {id:3,name:'Nami',       icon:'⚡',cost:3,kind:'unit',n:1,hp:420, dmg:90, rng:4.6,atk:1.2,spd:2.0,targets:'any',  r:.42,col:0xe0762a,acc:0xf3a94a,shoot:true,splash:1.4,size:.92},
+  {id:4,name:'Usop',       icon:'🎯',cost:3,kind:'unit',n:1,hp:360, dmg:105,rng:5.6,atk:1.5,spd:1.9,targets:'any',  r:.42,col:0x8b5a2b,acc:0xd9c25a,shoot:true,size:.92},
   {id:5,name:'Franky',     icon:'🤖',cost:6,kind:'unit',n:1,hp:2300,dmg:210,rng:1.9,atk:1.4,spd:1.25,targets:'navi',r:.7, col:0x2a6fb0,acc:0x9fd3f0,          size:1.25},
   {id:6,name:'Ciurma',     icon:'🏴‍☠️',cost:2,kind:'unit',n:4,hp:230,dmg:60,rng:1.5,atk:.9,spd:2.4,targets:'any',  r:.38,col:0x7a4a2a,acc:0xd0b48a,          size:.8},
   {id:7,name:'Pugno di Fuoco',icon:'🔥',cost:4,kind:'spell',dmg:340,srad:3.0,navi:.35},
   /* riserve: scambiale dentro DECK quando vuoi cambiare mazzo */
   {id:8,name:'Chopper',    icon:'🦌',cost:3,kind:'unit',n:1,hp:1250,dmg:75, rng:1.6,atk:1.0,spd:1.7,targets:'any',  r:.55,col:0xc06a4a,acc:0xf0d8b0,          size:.9},
   {id:9,name:'Brook',      icon:'🎻',cost:4,kind:'unit',n:3,hp:300,dmg:80, rng:1.6,atk:.8,spd:3.2,targets:'any',  r:.4, col:0x2b2b38,acc:0xf0efe6,          size:1.0},
-  {id:10,name:'Robin',     icon:'🖐️',cost:4,kind:'unit',n:2,hp:440,dmg:95, rng:5.5,atk:1.1,spd:2.0,targets:'any',  r:.42,col:0x4a2f6b,acc:0xb99adf,shoot:true,size:.95},
+  {id:10,name:'Robin',     icon:'🖐️',cost:4,kind:'unit',n:2,hp:440,dmg:95, rng:4.2,atk:1.1,spd:2.0,targets:'any',  r:.42,col:0x4a2f6b,acc:0xb99adf,shoot:true,size:.95},
   {id:11,name:'Fulmine',   icon:'🌩️',cost:2,kind:'spell',dmg:150,srad:2.5,navi:.4}
 ];
 const DECK = [0,1,2,3,4,5,6,7];   // le 8 carte in gioco
@@ -256,11 +256,11 @@ const MESH={ground:null};
 // geometrie e materiali condivisi: un personaggio è fatto di ~15 pezzi,
 // riusarli tiene il telefono tranquillo anche con 40 unità in campo
 function gBox(w,h,d){const k='b'+w+'_'+h+'_'+d;return GEOC[k]||(GEOC[k]=new THREE.BoxGeometry(w,h,d));}
-function gCyl(a,b,h,s){s=s||8;const k='c'+a+'_'+b+'_'+h+'_'+s;return GEOC[k]||(GEOC[k]=new THREE.CylinderGeometry(a,b,h,s));}
-function gSph(r,w,h){w=w||10;h=h||8;const k='s'+r+'_'+w+'_'+h;return GEOC[k]||(GEOC[k]=new THREE.SphereGeometry(r,w,h));}
-function gCone(r,h,s){s=s||8;const k='n'+r+'_'+h+'_'+s;return GEOC[k]||(GEOC[k]=new THREE.ConeGeometry(r,h,s));}
+function gCyl(a,b,h,s){s=s||12;const k='c'+a+'_'+b+'_'+h+'_'+s;return GEOC[k]||(GEOC[k]=new THREE.CylinderGeometry(a,b,h,s));}
+function gSph(r,w,h){w=w||16;h=h||12;const k='s'+r+'_'+w+'_'+h;return GEOC[k]||(GEOC[k]=new THREE.SphereGeometry(r,w,h));}
+function gCone(r,h,s){s=s||10;const k='n'+r+'_'+h+'_'+s;return GEOC[k]||(GEOC[k]=new THREE.ConeGeometry(r,h,s));}
 function gRing(a,b){const k='r'+a+'_'+b;return GEOC[k]||(GEOC[k]=new THREE.RingGeometry(a,b,20));}
-function gCap(r,theta){const k='k'+r+'_'+theta;return GEOC[k]||(GEOC[k]=new THREE.SphereGeometry(r,11,8,0,Math.PI*2,0,theta));}
+function gCap(r,theta){const k='k'+r+'_'+theta;return GEOC[k]||(GEOC[k]=new THREE.SphereGeometry(r,16,12,0,Math.PI*2,0,theta));}
 function gPlane(w,h){const k='p'+w+'_'+h;return GEOC[k]||(GEOC[k]=new THREE.PlaneGeometry(w,h));}
 
 function M(col,o){
@@ -406,7 +406,7 @@ function updateDeployZone(et){
 function shipMesh(team,kind){
   const g=new THREE.Group();
   const big=kind==='flag';
-  const L=big?7.6:5.4, W=big?3.2:2.3, H=big?1.6:1.2;
+  const L=big?5.1:3.6, W=big?2.2:1.55, H=big?1.15:.82;
   const wood=big?0x6a3d1f:0x8a5a32, wood2=big?0x8b5a2e:0xa7743f;
   const teamCol=team===0?0x2fb3a3:0xc24534;
   const hull=new THREE.Group(); g.add(hull); g.userData.hull=hull;
@@ -423,17 +423,17 @@ function shipMesh(team,kind){
   // polena: leone per l'ammiraglia, montone per le laterali
   const fig=new THREE.Group(); fig.position.set(0,H*1.05,L*.56); hull.add(fig);
   if(big){
-    part(gSph(.42,10,8),M(0xd8a12b),0,0,.1,fig);
-    for(let i=0;i<8;i++){const m=part(gCone(.13,.42,5),M(0xb8801c),Math.cos(i/8*6.28)*.42,Math.sin(i/8*6.28)*.42,0,fig);m.rotation.x=Math.PI/2;}
-    part(gSph(.2,8,6),M(0xe8c46a),0,-.05,.42,fig);
+    part(gSph(.3,14,12),M(0xd8a12b),0,0,.08,fig);
+    for(let i=0;i<8;i++){const m=part(gCone(.1,.3,6),M(0xb8801c),Math.cos(i/8*6.28)*.3,Math.sin(i/8*6.28)*.3,0,fig);m.rotation.x=Math.PI/2;}
+    part(gSph(.14,10,8),M(0xe8c46a),0,-.04,.3,fig);
   }else{
-    part(gSph(.3,9,7),M(0xf0e6d2),0,0,.12,fig);
-    [-1,1].forEach(s=>{const h=part(gCyl(.05,.09,.4,6),M(0xd8c9a8),s*.22,.12,.05,fig);h.rotation.z=s*.9;});
-    part(gCone(.16,.34,7),M(0xf0e6d2),0,-.12,.3,fig).rotation.x=Math.PI/2;
+    part(gSph(.21,12,10),M(0xf0e6d2),0,0,.09,fig);
+    [-1,1].forEach(s=>{const h=part(gCyl(.04,.07,.28,7),M(0xd8c9a8),s*.16,.09,.04,fig);h.rotation.z=s*.9;});
+    part(gCone(.11,.24,8),M(0xf0e6d2),0,-.09,.22,fig).rotation.x=Math.PI/2;
   }
 
   // alberi e vele
-  const masts=big?[[0,L*.12,3.9,2.9],[0,-L*.3,3.1,2.1]]:[[0,L*.05,3.2,2.4]];
+  const masts=big?[[0,L*.12,2.7,2.0],[0,-L*.3,2.1,1.5]]:[[0,L*.05,2.2,1.7]];
   masts.forEach((m,i)=>{
     const [mx,mz,mh,sw]=m;
     part(gCyl(.12,.16,mh*1.8,7),M(0x7a5330),mx,H+mh*.9,mz,hull);
@@ -447,19 +447,19 @@ function shipMesh(team,kind){
   });
 
   // scialuppa e botti sul ponte
-  part(gBox(1.2,.3,.5),M(0x9a6a37),W*.28,H*1.3,-L*.15,hull);
-  part(gCyl(.16,.17,.38,8),M(0x9a6a37),-W*.28,H*1.35,-L*.05,hull);
+  part(gBox(.8,.22,.34),M(0x9a6a37),W*.28,H*1.3,-L*.15,hull);
+  part(gCyl(.12,.13,.28,8),M(0x9a6a37),-W*.28,H*1.35,-L*.05,hull);
 
   // lanterna: accesa = nave attiva
-  const lamp=part(gSph(big?.34:.26,10,8),M(0xffd070,{em:0}),0,H*1.5,L*.3,hull);
+  const lamp=part(gSph(big?.24:.19,12,10),M(0xffd070,{em:0}),0,H*1.5,L*.3,hull);
   lamp.name='lamp'; g.userData.lamp=lamp;
 
   // cannoni
   const guns=big?3:2;
   for(let i=0;i<guns;i++){
-    const z=(i-(guns-1)/2)*1.5;
+    const z=(i-(guns-1)/2)*1.1;
     [-1,1].forEach(s=>{
-      const c=part(gCyl(.1,.14,.95,7),M(0x2f353b,{met:.4,rough:.5}),s*(W/2+.28),H+.3,z,hull);
+      const c=part(gCyl(.08,.1,.66,9),M(0x2f353b,{met:.4,rough:.5}),s*(W/2+.2),H+.24,z,hull);
       c.rotation.z=Math.PI/2;
     });
   }
@@ -477,7 +477,7 @@ function charProto(cardId,team){
   const key=cardId+'_'+team;
   if(PROTO[key]) return PROTO[key];
   const card=C(cardId);
-  const s=card.size||1;
+  const s=(card.size||1)*1.22;          // personaggi più grandi: si distinguono meglio sul telefono
   const g=new THREE.Group();
   const body=new THREE.Group(); body.name='body'; g.add(body);
   const teamCol=team===0?0x2fb3a3:0xc24534;
@@ -606,7 +606,7 @@ function unitMesh(card,team){
     head:m.getObjectByName('head'), tool:m.getObjectByName('tool'),
     flame:m.getObjectByName('flame'),
     bar:m.getObjectByName('bar'), barFg:m.getObjectByName('barFg'),
-    bw:.88*(card.size||1)
+    bw:.88*(card.size||1)*1.22
   };
   scene.add(m); return m;
 }
@@ -650,9 +650,9 @@ function resize(){
 /* ------------------------- 5. AVVIO DELLA PARTITA ---------------------- */
 function newTower(team,kind,x,z){
   return {team,kind,x,z,
-    hp: kind==='flag'?4800:3200, max: kind==='flag'?4800:3200,
-    dmg: kind==='flag'?130:105, rng: kind==='flag'?7.5:7.0, atk:.8, cd:0,
-    r: kind==='flag'?2.0:1.5,
+    hp: kind==='flag'?4200:2800, max: kind==='flag'?4200:2800,
+    dmg: kind==='flag'?130:105, rng: kind==='flag'?8.6:8.0, atk:.8, cd:0,
+    r: kind==='flag'?1.5:1.1,
     active: kind!=='flag', alive:true, mesh:null, bar:null};
 }
 
@@ -671,8 +671,8 @@ function resetMatch(){
       t.mesh=shipMesh(team,k);
       t.mesh.position.set(t.x,0,t.z);
       t.mesh.rotation.y = team===0?Math.PI:0;
-      t.bar=makeBar(k==='flag'?3.4:2.6, team===G.me?0x49e3a4:0xf06a4e);
-      t.bar.position.set(t.x,k==='flag'?4.2:3.4,t.z); scene.add(t.bar);
+      t.bar=makeBar(k==='flag'?2.6:2.0, team===G.me?0x49e3a4:0xf06a4e);
+      t.bar.position.set(t.x,k==='flag'?3.1:2.5,t.z); scene.add(t.bar);
       setBar(t.bar,1,team);
       G.towers.push(t);
     });
@@ -776,12 +776,14 @@ function stepUnits(dt){
     // --- rotta: se devo passare il fiume, prima il ponte
     let gx=tp.x,gz=tp.z;
     const needCross=(u.z>0)!==(tp.z>0);
+    const libero=(u.stall||0)>1.5;        // se resta imbottigliato, tira dritto
     if(Math.abs(u.z)<RIVER+.7 && needCross===false && Math.abs(u.x-u.lane*LANE_X)>BRIDGE_W/2){
       gx=u.lane*LANE_X;
-    } else if(needCross){
+    } else if(needCross && !libero){
       gx=u.lane*LANE_X;
       gz=Math.abs(u.z)>RIVER+.5 ? Math.sign(u.z)*(RIVER+.4) : -Math.sign(u.z)*(RIVER+.9);
-      if(Math.abs(u.x-gx)>.35 && Math.abs(u.z)<RIVER+1.2) gz=u.z;   // rientra in corsia
+      // tolleranza larga quanto il ponte: due unità che si spingono non devono bloccarsi
+      if(Math.abs(u.x-gx)>BRIDGE_W/2-.4 && Math.abs(u.z)<RIVER+1.2) gz=u.z;
     }
 
     const reach=card.rng+(tp.r||.5);
@@ -791,10 +793,14 @@ function stepUnits(dt){
     if(!inRange){
       const dx=gx-u.x,dz=gz-u.z,l=Math.hypot(dx,dz)||1;
       const sp=card.spd*dt;
+      const ox=u.x,oz=u.z;
       u.x+=dx/l*sp; u.z+=dz/l*sp;
       u.dir=Math.atan2(dx,dz);
       u.anim+=dt*8;
+      // se non avanza davvero, conta i secondi di stallo
+      u.stall = (Math.hypot(u.x-ox,u.z-oz) < sp*.3) ? (u.stall||0)+dt : 0;
     }else{
+      u.stall=0;
       u.dir=Math.atan2(tp.x-u.x,tp.z-u.z);
       u.cd-=dt;
       if(u.cd<=0){
@@ -1227,9 +1233,10 @@ function buildHUD(){
 const PORTRAIT={};
 function portrait(id){
   if(PORTRAIT[id]) return PORTRAIT[id];
-  const card=C(id), w=108,h=144;
-  const cv=document.createElement('canvas'); cv.width=w; cv.height=h;
-  const x=cv.getContext('2d');
+  const card=C(id), w=108,h=144,S=4;     // 4x: sul telefono i pixel si vedevano tutti
+  const cv=document.createElement('canvas'); cv.width=w*S; cv.height=h*S;
+  const x=cv.getContext('2d'); x.scale(S,S);
+  x.lineJoin='round'; x.lineCap='round';
   const hex=n=>'#'+n.toString(16).padStart(6,'0');
   const g=x.createLinearGradient(0,0,0,h);
   g.addColorStop(0,'#1d5a72'); g.addColorStop(1,'#0a2634');
@@ -1253,22 +1260,41 @@ function portrait(id){
     return PORTRAIT[id]=cv.toDataURL();
   }
 
+  const ink='#1b2a33';
   // spalle
   x.fillStyle=hex(card.col);
   x.beginPath(); x.ellipse(cx,cy+62,42,30,0,0,7); x.fill();
-  // collo e testa
+  x.strokeStyle=ink; x.lineWidth=2.5; x.stroke();
+  x.fillStyle='rgba(0,0,0,.18)';                       // piega della stoffa
+  x.beginPath(); x.ellipse(cx,cy+74,26,16,0,0,7); x.fill();
+  // collo
+  x.fillStyle='#d9a47c'; x.fillRect(cx-9,cy+14,18,18);
+  // testa
   x.fillStyle='#f0c6a0';
-  x.fillRect(cx-9,cy+16,18,16);
   x.beginPath(); x.arc(cx,cy,r,0,7); x.fill();
+  x.strokeStyle=ink; x.lineWidth=2.5; x.stroke();
+  x.fillStyle='rgba(0,0,0,.12)';                       // ombra sul lato
+  x.beginPath(); x.arc(cx,cy,r,-1.1,1.25); x.fill();
+  x.fillStyle='rgba(255,255,255,.22)';                 // luce
+  x.beginPath(); x.ellipse(cx-12,cy-11,9,6,-.5,0,7); x.fill();
   // capelli
   x.fillStyle=hex(card.acc);
-  x.beginPath(); x.arc(cx,cy-6,r+1,Math.PI,0); x.fill();
-  x.fillRect(cx-r-1,cy-8,6,id===3||id===10?46:12);
-  x.fillRect(cx+r-5,cy-8,6,id===3||id===10?46:12);
-  // occhi e bocca
+  x.beginPath(); x.arc(cx,cy-6,r+1.5,Math.PI,0); x.fill();
+  const lungo=(id===3||id===10);
+  x.beginPath(); x.moveTo(cx-r-1,cy-8); x.lineTo(cx-r+5,cy-8);
+  x.lineTo(cx-r+5,cy+(lungo?38:4)); x.quadraticCurveTo(cx-r-2,cy+(lungo?40:6),cx-r-1,cy-8); x.fill();
+  x.beginPath(); x.moveTo(cx+r+1,cy-8); x.lineTo(cx+r-5,cy-8);
+  x.lineTo(cx+r-5,cy+(lungo?38:4)); x.quadraticCurveTo(cx+r+2,cy+(lungo?40:6),cx+r+1,cy-8); x.fill();
+  x.strokeStyle='rgba(0,0,0,.25)'; x.lineWidth=1.5;
+  x.beginPath(); x.arc(cx,cy-6,r+1.5,Math.PI,0); x.stroke();
+  // occhi, sopracciglia, bocca
+  x.fillStyle='#fff';
+  x.beginPath(); x.ellipse(cx-10,cy+2,5.5,6,0,0,7); x.ellipse(cx+10,cy+2,5.5,6,0,0,7); x.fill();
   x.fillStyle='#23191a';
-  x.fillRect(cx-13,cy-2,6,7); x.fillRect(cx+7,cy-2,6,7);
-  x.strokeStyle='#8a5a4a'; x.lineWidth=2;
+  x.beginPath(); x.arc(cx-9,cy+3,3.2,0,7); x.arc(cx+11,cy+3,3.2,0,7); x.fill();
+  x.strokeStyle=ink; x.lineWidth=2.2;
+  x.beginPath(); x.moveTo(cx-16,cy-8); x.lineTo(cx-5,cy-6); x.moveTo(cx+16,cy-8); x.lineTo(cx+5,cy-6); x.stroke();
+  x.strokeStyle='#a86a58'; x.lineWidth=2;
   x.beginPath(); x.moveTo(cx-7,cy+15); x.quadraticCurveTo(cx,cy+21,cx+7,cy+15); x.stroke();
 
   switch(id){
