@@ -1,0 +1,56 @@
+GRAND LINE CLASH — note di installazione
+========================================
+
+1) PROVA SUBITO
+   Apri index.html sul telefono o sul PC: "Allenamento contro la CPU" funziona
+   senza nessuna configurazione.
+
+2) PARTITA A DUE (tu e tuo fratello)
+   Serve un progetto Firebase con REALTIME DATABASE (non Firestore).
+   a. console.firebase.google.com -> nuovo progetto (es. grand-line-clash)
+   b. Build -> Realtime Database -> Crea database -> zona europe-west1
+      -> avvia in "modalità test"
+   c. Impostazioni progetto -> Le tue app -> Web -> registra app -> copia la config
+   d. In index.html cerca FIREBASE_CONFIG (riga ~15) e incolla al posto di null:
+
+      const FIREBASE_CONFIG = {
+        apiKey:"...",
+        authDomain:"grand-line-clash.firebaseapp.com",
+        databaseURL:"https://grand-line-clash-default-rtdb.europe-west1.firebasedatabase.app",
+        projectId:"grand-line-clash",
+        appId:"..."
+      };
+
+   La riga databaseURL deve esserci: senza quella il gioco non trova il database.
+
+3) REGOLE DEL DATABASE (Realtime Database -> Regole)
+   Le stanze si cancellano da sole quando ci si disconnette.
+
+   {
+     "rules": {
+       "rooms": {
+         "$code": {
+           ".read": true,
+           ".write": true,
+           ".validate": "$code.length == 4"
+         }
+       }
+     }
+   }
+
+4) METTERLO ONLINE
+   Carica tutti i file (index.html, manifest.json, sw.js, le 3 icone) in un repo
+   GitHub -> Settings -> Pages -> branch main. Poi apri il link col telefono e
+   "Aggiungi a schermata Home": parte a schermo intero come un'app.
+   Per l'APK Android: pwabuilder.com con lo stesso indirizzo.
+
+   Ogni volta che modifichi index.html, alza CACHE in sw.js (v1 -> v2 -> ...),
+   altrimenti i telefoni che l'hanno già installata continuano a vedere la
+   versione vecchia.
+
+5) DOVE SI TOCCA IL BILANCIAMENTO
+   - CARDS  (riga ~60): costo, vita, danno, gittata, velocità di ogni personaggio
+   - DECK   : le 8 carte in gioco. Ci sono 4 riserve pronte (Chopper, Brook,
+              Robin, Fulmine): basta scambiare i numeri.
+   - newTower: vita e cannoni delle navi
+   - MATCH_TIME / DOUBLE_ELIX / ELIX_TIME: durata e ritmo della partita
