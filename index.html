@@ -112,6 +112,18 @@ input{width:100%;padding:12px;border-radius:10px;border:1px solid rgba(239,220,1
 #endTitle{font-family:Cinzel,serif;font-size:34px;text-align:center;margin-bottom:4px}
 #endSub{text-align:center;font-size:13px;opacity:.8;margin-bottom:14px}
 .hidden{display:none !important}
+#statsList{max-height:58vh;overflow:auto;-webkit-overflow-scrolling:touch;margin:-4px -4px 10px;padding:4px}
+.srow{display:flex;gap:9px;align-items:center;padding:8px 6px;border-bottom:1px solid rgba(239,220,180,.13)}
+.srow:last-child{border-bottom:none}
+.sav{width:38px;height:50px;border-radius:6px;background-size:cover;background-position:center top;
+  border:1px solid rgba(239,220,180,.3);flex:0 0 38px}
+.sinfo{flex:1;min-width:0}
+.sname{font-weight:800;font-size:13px;display:flex;align-items:center;gap:6px}
+.sname b{font-family:Cinzel,serif;color:#ffd978;font-weight:700}
+.sstats{font-size:10.5px;opacity:.78;line-height:1.5;margin-top:2px}
+.sstats span{display:inline-block;margin-right:9px;white-space:nowrap}
+.sclass{font-size:8px;font-weight:800;padding:1px 4px;border-radius:3px;border:1px solid rgba(239,220,180,.3)}
+#statsNote{font-size:11px;opacity:.6;margin-top:8px;text-align:center}
 </style>
 </head>
 <body>
@@ -146,6 +158,15 @@ input{width:100%;padding:12px;border-radius:10px;border:1px solid rgba(239,220,1
     <button onclick="UI.startSolo()">Allenamento contro la CPU</button>
     <button class="ghost" onclick="UI.showOnline()">Gioca con tuo fratello</button>
     <button class="ghost" onclick="UI.showHelp()">Come si gioca</button>
+    <button class="ghost" onclick="UI.showStats()">Statistiche dei personaggi</button>
+    <div id="statsNote"></div>
+  </div>
+
+  <div class="panel hidden" id="pStats">
+    <h2>La ciurma</h2>
+    <div id="statsList"></div>
+    <div class="muted" id="statsSrc"></div>
+    <button class="ghost" onclick="UI.back()" style="margin-top:10px">Indietro</button>
   </div>
 
   <div class="panel hidden" id="pHelp">
@@ -230,6 +251,67 @@ const CARDS = [
   {id:11,name:'Fulmine',   icon:'🌩️',cost:2,kind:'spell',dmg:150,srad:2.5,navi:.4}
 ];
 const DECK = [0,1,2,3,4,5,6,7];   // le 8 carte in gioco
+
+// statistiche delle navi (sovrascritte da personaggi.csv se presente)
+const SHIPS = {
+  side:{hp:2400,dmg:70,atk:.8,rng:10.8,r:.75},
+  flag:{hp:3600,dmg:90,atk:.8,rng:9.8,r:.95}
+};
+
+/* --- lettura di personaggi.csv ---------------------------------------
+   Il file sta accanto a index.html nel repo. Se c'e, i suoi numeri
+   vincono su quelli qui sopra: per ribilanciare basta sostituire il CSV,
+   non serve toccare il codice. Se manca (o si apre il gioco da file://)
+   il gioco usa i valori predefiniti e non se ne accorge nessuno.        */
+let STATS_SRC='predefinite';
+const num=v=>{ if(v===undefined) return NaN;
+  const n=parseFloat(String(v).replace(',','.').replace(/[^0-9.\-]/g,'')); return isFinite(n)?n:NaN; };
+
+function applyStatsCSV(text){
+  const righe=text.split(/\r?\n/).filter(r=>r.indexOf(';')>0);
+  if(!righe.length) return false;
+  const col=righe[0].split(';').map(c=>c.trim().toLowerCase());
+  const idx=n=>col.indexOf(n);
+  const iNome=idx('nome');
+  if(iNome<0) return false;
+  const perNome={};
+  CARDS.forEach(c=>perNome[c.name.toLowerCase()]=c);
+  let applicate=0;
+  for(let r=1;r<righe.length;r++){
+    const v=righe[r].split(';').map(c=>c.trim());
+    const nome=(v[iNome]||'').toLowerCase();
+    const set=(o,k,i,min)=>{const n=num(v[i]); if(isFinite(n)&&(min===undefined||n>=min)){o[k]=n;return 1;} return 0;};
+
+    if(nome==='nave laterale'||nome==='nave ammiraglia'){
+      const o=nome==='nave laterale'?SHIPS.side:SHIPS.flag;
+      applicate+=set(o,'hp',idx('vita'),1)+set(o,'dmg',idx('danno'),0)
+               +set(o,'atk',idx('cadenza_sec'),.1)+set(o,'rng',idx('gittata'),1);
+      continue;
+    }
+    const card=perNome[nome];
+    if(!card) continue;
+    applicate+=set(card,'cost',idx('costo'),1);
+    if(card.kind==='spell'){
+      applicate+=set(card,'dmg',idx('danno'),0);
+      const raggio=num(v[idx('gittata')]);      // colonna scritta come "raggio 3.0"
+      if(isFinite(raggio)&&raggio>0){card.srad=raggio;applicate++;}
+    }else{
+      applicate+=set(card,'n',idx('quantita'),1)+set(card,'hp',idx('vita'),1)
+               +set(card,'dmg',idx('danno'),0)+set(card,'atk',idx('cadenza_sec'),.1)
+               +set(card,'rng',idx('gittata'),.3)+set(card,'spd',idx('velocita'),.2);
+      const b=(v[idx('bersagli')]||'').toLowerCase();
+      if(b.indexOf('nav')>=0) card.targets='navi'; else if(b) card.targets='any';
+    }
+  }
+  return applicate>0;
+}
+
+function loadStats(){
+  return fetch('personaggi.csv',{cache:'no-cache'})
+    .then(r=>r.ok?r.text():Promise.reject())
+    .then(t=>{ if(applyStatsCSV(t)){ STATS_SRC='personaggi.csv'; showStatsNote(); } })
+    .catch(()=>{});
+}
 
 const C = id => CARDS[id];
 
@@ -681,10 +763,11 @@ function resize(){
 
 /* ------------------------- 5. AVVIO DELLA PARTITA ---------------------- */
 function newTower(team,kind,x,z){
+  const st=kind==='flag'?SHIPS.flag:SHIPS.side;
   return {team,kind,x,z,
-    hp: kind==='flag'?3600:2400, max: kind==='flag'?3600:2400,
-    dmg: kind==='flag'?90:70, rng: kind==='flag'?9.8:10.8, atk:.8, cd:0,
-    r: kind==='flag'?.95:.75,
+    hp: st.hp, max: st.hp,
+    dmg: st.dmg, rng: st.rng, atk: st.atk, cd:0,
+    r: st.r,
     active: kind!=='flag', alive:true, mesh:null, bar:null};
 }
 
@@ -1592,11 +1675,41 @@ function loadScript(src){
 
 /* -------------------------------- 11. UI ------------------------------- */
 const menu=document.getElementById('menu'),hud=document.getElementById('hud');
-const panels=['pHome','pHelp','pOnline','pLobby','pEnd'].map(id=>document.getElementById(id));
+const panels=['pHome','pHelp','pStats','pOnline','pLobby','pEnd'].map(id=>document.getElementById(id));
 function panel(id){panels.forEach(p=>p.classList.toggle('hidden',p.id!==id));menu.classList.remove('off');}
 
 const UI={
   showHelp(){panel('pHelp');},
+
+  showStats(){
+    const L=document.getElementById('statsList');
+    L.innerHTML='';
+    const cls=c=>c.kind==='spell'?['are','AREA']:c.rng<1.4?['cac','CORPO A CORPO']:c.rng<5?['med','MEDIA']:['lun','LUNGA'];
+    const riga=(c)=>{
+      const t=cls(c), inDeck=DECK.indexOf(c.id)>=0;
+      let st;
+      if(c.kind==='spell'){
+        st='<span>Danno '+Math.round(c.dmg)+'</span><span>Raggio '+c.srad+'</span><span>Sulle navi '+Math.round((c.navi||.35)*100)+'%</span>';
+      }else{
+        st='<span>Vita '+Math.round(c.hp)+'</span><span>Danno '+Math.round(c.dmg)+'</span>'+
+           '<span>Al secondo '+Math.round(c.dmg/c.atk)+'</span><span>Gittata '+c.rng+'</span>'+
+           '<span>Velocità '+c.spd+'</span>'+((c.n||1)>1?'<span>×'+c.n+'</span>':'')+
+           (c.targets==='navi'?'<span>Solo navi</span>':'');
+      }
+      return '<div class="srow"><div class="sav" style="background-image:url('+portrait(c.id)+')"></div>'+
+        '<div class="sinfo"><div class="sname"><b>'+c.cost+'</b> '+c.name+
+        ' <i class="sclass '+t[0]+'" style="font-style:normal">'+t[1]+'</i>'+
+        (inDeck?'':' <i style="font-style:normal;font-size:8px;opacity:.5">RISERVA</i>')+
+        '</div><div class="sstats">'+st+'</div></div></div>';
+    };
+    L.innerHTML = CARDS.slice().sort((a,b)=>(DECK.indexOf(b.id)>=0)-(DECK.indexOf(a.id)>=0)).map(riga).join('')+
+      '<div class="srow"><div class="sinfo"><div class="sname">Navi</div><div class="sstats">'+
+      '<span>Laterale: vita '+SHIPS.side.hp+', danno '+SHIPS.side.dmg+', tiro '+SHIPS.side.rng+'</span><br>'+
+      '<span>Ammiraglia: vita '+SHIPS.flag.hp+', danno '+SHIPS.flag.dmg+', tiro '+SHIPS.flag.rng+'</span>'+
+      '</div></div></div>';
+    document.getElementById('statsSrc').textContent='Valori in uso: '+STATS_SRC+'.';
+    panel('pStats');
+  },
   back(){panel('pHome');document.getElementById('onlineErr').textContent='';},
 
   startSolo(){ G.mode='solo'; G.me=0; this.beginMatch('solo'); },
@@ -1657,6 +1770,11 @@ const UI={
   }
 };
 
+function showStatsNote(){
+  const n=document.getElementById('statsNote');
+  if(n) n.textContent='Statistiche caricate da personaggi.csv';
+}
+
 function showEnd(){
   const r=G.result||{winner:-1};
   const win=r.winner===-1?null:(r.winner===G.me);
@@ -1669,6 +1787,7 @@ function showEnd(){
 
 /* ------------------------------ AVVIO ---------------------------------- */
 init3D();
+loadStats();
 document.getElementById('codeIn').addEventListener('input',e=>{e.target.value=e.target.value.toUpperCase();});
 if('serviceWorker' in navigator && location.protocol.startsWith('http')){
   addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));

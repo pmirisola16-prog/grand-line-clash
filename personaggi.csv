@@ -1,0 +1,32 @@
+nome;costo;tipo;quantita;vita;danno;danno_al_secondo_calcolato;cadenza_sec;gittata;classe;velocita;bersagli;note
+Rufy;5;truppa;1;1500;135;123;1.1;2.6;media;2.0;tutto;il braccio si allunga quando colpisce
+Zoro;4;truppa;1;980;170;200;0.85;0.9;corpo a corpo;2.2;tutto;danno piu alto del gioco fra le truppe singole
+Sanji;3;truppa;1;720;115;153;0.75;0.9;corpo a corpo;3.1;tutto;il piu veloce
+Nami;3;truppa;1;420;90;75;1.2;4.0;media;2.0;tutto;colpisce ad area piccola (raggio 1.4)
+Usop;3;truppa;1;360;105;70;1.5;6.0;lunga;1.9;tutto;unico a gittata lunga
+Franky;6;truppa;1;2300;210;150;1.4;1.1;corpo a corpo;1.25;solo navi;ignora le truppe e punta le navi
+Ciurma;2;truppa;4;230;60;67;0.9;0.85;corpo a corpo;2.4;tutto;quattro unita insieme
+Pugno di Fuoco;4;magia;-;-;340;-;-;raggio 3.0;area;-;tutto;sulle navi fa il 35% del danno
+Chopper;3;truppa;1;1250;75;75;1.0;0.95;corpo a corpo;1.7;tutto;RISERVA - tank leggero
+Brook;4;truppa;3;300;80;100;0.8;0.9;corpo a corpo;3.2;tutto;RISERVA - tre unita velocissime
+Robin;4;truppa;2;440;95;86;1.1;4.0;media;2.0;tutto;RISERVA - due unita a media gittata
+Fulmine;2;magia;-;-;150;-;-;raggio 2.5;area;-;tutto;RISERVA - sulle navi fa il 40%
+Nave laterale;-;nave;2;2400;70;87;0.8;10.8;-;ferma;tutto;copre la sua corsia fino al ponte
+Nave ammiraglia;-;nave;1;3600;90;112;0.8;9.8;-;ferma;tutto;spenta finche non cade una laterale o viene colpita
+
+RIFERIMENTI UTILI
+Elisir: 1 ogni 2.8 secondi, massimo 10, doppio negli ultimi 2 minuti
+Durata partita: 6 minuti + 1 minuto supplementare in caso di parita
+Campo: 16 quadretti di larghezza, 35 di lunghezza (17.5 per meta)
+Distanza da ponte a nave laterale: circa 10 quadretti
+Velocita: 1.25 = lento (Franky), 2.0 = normale, 3.1 = veloce (Sanji)
+
+COME USARLO
+Questo file va caricato nel repo accanto a index.html: il gioco lo legge da solo all'avvio.
+Cambi un numero, ricarichi il file su GitHub, ricarichi il gioco e il valore e' gia' dentro.
+Apri con Excel (separatore punto e virgola). La virgola decimale va bene (1,5 = 1.5).
+La colonna danno_al_secondo_calcolato la ricalcolo io: puoi ignorarla.
+La colonna gittata delle magie si scrive come "raggio 3.0".
+Non cambiare i nomi nella prima colonna, sono la chiave che collega la riga al personaggio.
+Un valore vuoto o sbagliato viene semplicemente ignorato: il gioco tiene il suo.
+Per aggiungere un personaggio nuovo serve anche il modello 3D, quindi scrivilo nelle note e lo faccio io.
