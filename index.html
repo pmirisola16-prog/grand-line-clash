@@ -30,23 +30,24 @@ canvas{display:block;position:fixed;inset:0;width:100%;height:100%}
 #hud.on{display:flex}
 
 #top{padding:calc(var(--safe-t) + 8px) 10px 0;display:flex;align-items:flex-start;gap:8px}
-.fleet{display:flex;gap:6px;flex:1}
+.fleet{display:flex;gap:4px;flex:1 1 0;min-width:0}
 .fleet.mine{justify-content:flex-start}
 .fleet.theirs{justify-content:flex-end}
-.shipchip{width:44px;background:rgba(7,26,36,.72);border:1px solid rgba(239,220,180,.22);
+.shipchip{flex:1 1 0;min-width:0;max-width:56px;background:rgba(7,26,36,.72);border:1px solid rgba(239,220,180,.22);
   border-radius:7px;padding:4px 4px 5px;backdrop-filter:blur(4px)}
-.shipchip .lbl{font-size:8px;letter-spacing:.04em;opacity:.75;text-align:center;margin-bottom:3px;white-space:nowrap}
+.shipchip .lbl{font-size:8px;letter-spacing:.02em;opacity:.75;text-align:center;margin-bottom:3px;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .shipchip .bar{height:5px;border-radius:3px;background:#2a1c16;overflow:hidden}
 .shipchip .bar i{display:block;height:100%;width:100%;transition:width .25s}
 .mine .bar i{background:var(--me)}
 .theirs .bar i{background:var(--op)}
-.shipchip.flag{width:52px;border-color:var(--gold)}
+.shipchip.flag{border-color:var(--gold)}
 .shipchip.down{opacity:.35}
 .shipchip.down .bar i{width:0 !important}
 
-#clock{font-family:Cinzel,serif;font-size:22px;font-weight:700;padding:3px 12px 5px;
+#clock{flex:0 0 auto;font-family:Cinzel,serif;font-size:20px;font-weight:700;padding:3px 10px 5px;
   background:rgba(7,26,36,.8);border:1px solid rgba(226,167,44,.5);border-radius:8px;line-height:1.1;
-  text-align:center;min-width:88px}
+  text-align:center;min-width:74px}
 #clock small{display:block;font-family:Inter;font-size:8.5px;font-weight:600;letter-spacing:.12em;opacity:.7}
 #clock.hot{color:#ffca55;border-color:var(--gold)}
 
@@ -60,18 +61,20 @@ canvas{display:block;position:fixed;inset:0;width:100%;height:100%}
 
 #cards{display:flex;gap:6px;align-items:flex-end}
 .card{flex:1;aspect-ratio:3/4;border-radius:10px;position:relative;overflow:hidden;
-  background:linear-gradient(180deg,#1a4457,#0b2735);border:1.5px solid rgba(239,220,180,.3);
+  background:linear-gradient(180deg,#1a4457,#0b2735);border:2px solid #d8b45c;
+  box-shadow:0 2px 0 rgba(0,0,0,.45), inset 0 0 0 1px rgba(255,255,255,.12);
   display:flex;flex-direction:column;justify-content:flex-end;padding:5px 4px;transition:transform .12s,border-color .12s}
 .card .art{position:absolute;inset:0;background-size:cover;background-position:center top;
   image-rendering:auto}
 .card::after{content:'';position:absolute;inset:0;z-index:1;
-  background:linear-gradient(180deg,transparent 52%,rgba(6,20,28,.9) 100%)}
+  background:linear-gradient(180deg,transparent 62%,rgba(6,20,28,.82) 100%)}
 .card .tag{position:absolute;z-index:2;top:4px;right:4px;font-size:7px;font-weight:800;letter-spacing:.06em;
   padding:2px 4px;border-radius:4px;background:rgba(5,18,25,.8);border:1px solid rgba(239,220,180,.3)}
 .card .tag.cac{color:#ff9e7a} .card .tag.med{color:#ffd36e} .card .tag.lun{color:#8fe3ff} .card .tag.are{color:#ffb1f0}
-.card .nm{position:relative;z-index:2;font-size:9.5px;font-weight:800;text-align:center;line-height:1.05;
-  text-shadow:0 1px 3px #000;letter-spacing:.01em}
-.card .cost{position:absolute;z-index:2;top:3px;left:3px;width:19px;height:19px;border-radius:50%;
+.card .nm{position:relative;z-index:2;font-size:10.5px;font-weight:800;text-align:center;line-height:1.05;
+  text-shadow:0 1px 3px #000,0 0 6px #000;letter-spacing:.01em;color:#fff}
+.card .cost{position:absolute;z-index:2;top:3px;left:3px;width:21px;height:21px;border-radius:50%;
+  box-shadow:0 1px 3px rgba(0,0,0,.6);
   background:radial-gradient(circle at 35% 30%,#ffe89a,#c9871a);color:#3a2400;font-weight:800;font-size:11px;
   display:flex;align-items:center;justify-content:center;border:1px solid #6d4a06}
 .card.sel{border-color:var(--gold);transform:translateY(-9px) scale(1.04);box-shadow:0 0 0 2px rgba(226,167,44,.35)}
@@ -207,6 +210,8 @@ input{width:100%;padding:12px;border-radius:10px;border:1px solid rgba(239,220,1
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="GLTFLoader.js" onerror="window.__noLoader=1"></script>
+<script src="SkeletonUtils.js" onerror="window.__noLoader=1"></script>
 <script>
 /* =========================================================================
    GRAND LINE CLASH — gioco completo in un file solo.
@@ -217,7 +222,7 @@ input{width:100%;padding:12px;border-radius:10px;border:1px solid rgba(239,220,1
 // Per giocare online incolla qui la config del tuo progetto Firebase
 // (Realtime Database). Lasciando null funziona solo l'allenamento offline.
 const FIREBASE_CONFIG = null;
-const VERSION = 'v6';    // scritto in basso nel menu: serve a capire se il telefono
+const VERSION = 'v8';    // scritto in basso nel menu: serve a capire se il telefono
                          // ha davvero preso l'ultima versione o una in cache
 /* esempio:
 const FIREBASE_CONFIG = {
@@ -435,11 +440,11 @@ function buildArena(){
   [1,-1].forEach(s=>{
     const cz=s*(RIVER+len/2);
     part(gBox(ARENA_W,1.0,len),M(0xd9c48e,{rough:1}),0,-.5,cz,g).receiveShadow=true;   // sabbia
-    part(gBox(ARENA_W-1.4,.16,len-1.2),M(0x7fa855),0,.07,cz,g).receiveShadow=true;     // prato
+    part(gBox(ARENA_W-1.4,.16,len-1.2),M(0x6b9a3f),0,.07,cz,g).receiveShadow=true;     // prato
     // strisce di erba più chiara: leggibilità delle corsie
     for(let i=0;i<5;i++){
       const w=(ARENA_W-1.4)/5;
-      if(i%2) part(gBox(w,.02,len-1.2),M(0x8db962),-(ARENA_W-1.4)/2+w*(i+.5),.16,cz,g);
+      if(i%2) part(gBox(w,.02,len-1.2),M(0x7cb04a),-(ARENA_W-1.4)/2+w*(i+.5),.16,cz,g);
     }
     part(gBox(ARENA_W+.5,.4,.5),M(0x8a7345),0,-.18,s*RIVER,g);             // banchina
     // scogliera dietro alle navi
@@ -485,7 +490,7 @@ function buildGridHalf(sign){
   for(let z=Math.ceil(z0);z<=Math.floor(z1);z++) v.push(x0,y,sign*z, x1,y,sign*z);
   const geo=new THREE.BufferGeometry();
   geo.setAttribute('position',new THREE.Float32BufferAttribute(v,3));
-  const mat=new THREE.LineBasicMaterial({color:0xffffff,transparent:true,opacity:.13,depthWrite:false});
+  const mat=new THREE.LineBasicMaterial({color:0x06212c,transparent:true,opacity:.18,depthWrite:false});
   const ls=new THREE.LineSegments(geo,mat); scene.add(ls); return ls;
 }
 
@@ -510,8 +515,8 @@ function updateDeployZone(et){
   // la griglia della tua metà si accende quando hai una carta in mano pronta
   if(GRID[0]&&GRID[1]){
     const mine=G.me===0?0:1;
-    GRID[mine].material.opacity=on?.34:.15;
-    GRID[1-mine].material.opacity=.10;
+    GRID[mine].material.opacity=on?.5:.2;
+    GRID[1-mine].material.opacity=.12;
   }
   zoneMesh.visible=on;
   if(!on) return;
@@ -527,7 +532,7 @@ function updateDeployZone(et){
 function shipMesh(team,kind){
   const g=new THREE.Group();
   const big=kind==='flag';
-  const L=big?3.5:2.5, W=big?1.5:1.05, H=big?.8:.56;
+  const L=big?3.9:2.8, W=big?1.7:1.2, H=big?1.05:.75;
   const wood=big?0x6a3d1f:0x8a5a32, wood2=big?0x8b5a2e:0xa7743f;
   const teamCol=team===0?0x2fb3a3:0xc24534;
   const hull=new THREE.Group(); g.add(hull); g.userData.hull=hull;
@@ -555,7 +560,7 @@ function shipMesh(team,kind){
   }
 
   // alberi e vele
-  const masts=big?[[0,L*.12,1.9,1.4],[0,-L*.3,1.5,1.05]]:[[0,L*.05,1.5,1.15]];
+  const masts=big?[[0,L*.12,3.1,2.1],[0,-L*.3,2.4,1.6]]:[[0,L*.05,2.5,1.75]];
   masts.forEach((m,i)=>{
     const [mx,mz,mh,sw]=m;
     part(gCyl(.12,.16,mh*1.8,7),M(0x7a5330),mx,H+mh*.9,mz,hull);
@@ -594,13 +599,14 @@ function shipMesh(team,kind){
 // Ogni carta ha un prototipo per squadra: le unità sono cloni, quindi
 // geometrie e materiali restano condivisi.
 // i prototipi dipendono da chi sei (colore barra vita): si azzerano a ogni partita
-function clearProtos(){ for(const k in PROTO) delete PROTO[k]; }
+function clearProtos(){ for(const k in PROTO) delete PROTO[k]; for(const k in MPROTO) delete MPROTO[k]; }
 
 function charProto(cardId,team){
   const key=cardId+'_'+team;
   if(PROTO[key]) return PROTO[key];
   const card=C(cardId);
-  const s=(card.size||1)*1.22;          // personaggi più grandi: si distinguono meglio sul telefono
+  const s=(card.size||1)*1.95;          // proporzione rispetto alle navi come in Clash Royale:
+                                        // una truppa è circa un terzo della nave, non un puntino
   const g=new THREE.Group();
   const body=new THREE.Group(); body.name='body'; g.add(body);
   const teamCol=team===0?0x2fb3a3:0xc24534;
@@ -653,9 +659,9 @@ function charProto(cardId,team){
 function extras(id,head,body,g,s,card){
   switch(id){
     case 0: // Rufy: cappello di paglia, cicatrice, gilet aperto
-      part(gCyl(.44*s,.46*s,.05*s,14),M(0xe9cf8c),0,.22*s,0,head,'hat');
-      part(gCyl(.22*s,.24*s,.16*s,14),M(0xe9cf8c),0,.28*s,0,head);
-      part(gCyl(.245*s,.245*s,.06*s,14),M(0xb8342a),0,.26*s,0,head);
+      part(gCyl(.33*s,.35*s,.05*s,16),M(0xe9cf8c),0,.2*s,0,head,'hat');
+      part(gCyl(.2*s,.22*s,.2*s,16),M(0xe9cf8c),0,.3*s,0,head);
+      part(gCyl(.225*s,.225*s,.07*s,16),M(0xb8342a),0,.25*s,0,head);
       part(gBox(.02*s,.07*s,.02*s),M(0xb07060),-.1*s,-.09*s,.2*s,head);   // cicatrice
       part(gBox(.1*s,.5*s,.02*s),M(0xd8483a),0,.68*s,.14*s,body);
       break;
@@ -724,6 +730,10 @@ function extras(id,head,body,g,s,card){
 }
 
 function unitMesh(card,team){
+  if(MODEL_OK && MODELLI[card.id]){
+    const mm=modelMesh(card,team);
+    if(mm) return mm;
+  }
   const m=charProto(card.id,team).clone();
   m.userData={
     body:m.getObjectByName('body'),
@@ -732,7 +742,7 @@ function unitMesh(card,team){
     head:m.getObjectByName('head'), tool:m.getObjectByName('tool'),
     flame:m.getObjectByName('flame'),
     bar:m.getObjectByName('bar'), barFg:m.getObjectByName('barFg'),
-    bw:.88*(card.size||1)*1.22
+    bw:.88*(card.size||1)*1.95
   };
   scene.add(m); return m;
 }
@@ -784,7 +794,7 @@ function resize(){
   const w=innerWidth,h=innerHeight;
   renderer.setSize(w,h,false);
   camera.aspect=w/h;
-  const a=THREE.MathUtils.degToRad(54);
+  const a=THREE.MathUtils.degToRad(46);
   const vhalf=Math.tan(THREE.MathUtils.degToRad(camera.fov/2));
   const hhalf=vhalf*camera.aspect;
 
@@ -804,6 +814,158 @@ function resize(){
   camera.position.set(0,D*Math.sin(a),s*D*Math.cos(a));
   camera.lookAt(0,0,s*shift);
   camera.updateProjectionMatrix();
+}
+
+/* ---------------- 4b. PERSONAGGI CON MODELLI 3D VERI -------------------
+   I corpi sono modelli KayKit (licenza CC0) già riggati e animati.
+   Se i file non ci sono, o il telefono non ce la fa, il gioco torna da solo
+   ai personaggi costruiti da codice: non resta mai senza niente.          */
+
+let MODEL_OK=false, MODEL_STATO='non caricati';
+const CLIPS={}, BODIES={}, MPROTO={};
+const BASE=['_Body','_Head','_ArmLeft','_ArmRight','_LegLeft','_LegRight','_Head_Hooded'];
+
+// corpo, scala, parti extra da mostrare, animazione d'attacco, accessori
+const MODELLI={
+  0:{f:'barbarian.glb',   s:.055, extra:[],                          atk:'Unarmed_Melee_Attack_Punch_A', cappello:true},
+  1:{f:'knight.glb',      s:.052, extra:['1H_Sword','1H_Sword_Offhand'], atk:'1H_Melee_Attack_Slice_Diagonal'},
+  2:{f:'rogue.glb',       s:.05,  extra:[],                          atk:'Unarmed_Melee_Attack_Kick'},
+  3:{f:'mage.glb',        s:.048, extra:['1H_Wand','Mage_Hat'],      atk:'Spellcast_Shoot'},
+  4:{f:'rogue-hooded.glb',s:.05,  extra:['2H_Crossbow'],             atk:'1H_Ranged_Shoot', naso:true},
+  5:{f:'knight.glb',      s:.07,  extra:['Knight_Helmet','2H_Sword'],atk:'2H_Melee_Attack_Chop'},
+  6:{f:'rogue.glb',       s:.042, extra:['Knife'],                   atk:'1H_Melee_Attack_Slice_Diagonal'},
+  8:{f:'barbarian.glb',   s:.045, extra:['Barbarian_Hat'],           atk:'Unarmed_Melee_Attack_Punch_A'},
+  9:{f:'rogue-hooded.glb',s:.052, extra:['Knife'],                   atk:'1H_Melee_Attack_Slice_Diagonal'},
+  10:{f:'mage.glb',       s:.048, extra:['1H_Wand'],                 atk:'Spellcast_Shoot'}
+};
+
+function loadModels(){
+  if(typeof THREE.GLTFLoader!=='function'){ MODEL_STATO='manca GLTFLoader.js'; return; }
+  if(typeof THREE.SkeletonUtils!=='object'&&typeof THREE.SkeletonUtils!=='function'){ MODEL_STATO='manca SkeletonUtils.js'; return; }
+  const L=new THREE.GLTFLoader();
+  const file=[...new Set(Object.values(MODELLI).map(m=>m.f))];
+  let restano=file.length+1, fallito=false;
+  MODEL_STATO='caricamento…';
+  const errore=()=>{ if(!fallito){fallito=true; MODEL_STATO='file non trovati'; verTag();} };
+  const fatto=()=>{
+    if(--restano>0||fallito) return;
+    MODEL_OK=true; MODEL_STATO='modelli 3D'; verTag();
+  };
+  L.load('animazioni.glb', g=>{ g.animations.forEach(c=>CLIPS[c.name]=c); fatto(); }, undefined, errore);
+  file.forEach(f=>L.load(f, g=>{
+    g.scene.traverse(o=>{ if(o.isMesh||o.isSkinnedMesh){ o.castShadow=true; o.frustumCulled=false; } });
+    BODIES[f]=g.scene; fatto();
+  }, undefined, errore));
+}
+
+function modelProto(cardId,team){
+  const key=cardId+'_'+team;
+  if(MPROTO[key]) return MPROTO[key];
+  const cfg=MODELLI[cardId], card=C(cardId);
+  const src=BODIES[cfg.f];
+  if(!src) return null;
+  const m=THREE.SkeletonUtils.clone(src);
+  m.scale.setScalar(cfg.s);
+
+  // una sola texture per modello: la coloro per distinguere personaggio e squadra
+  const tinta=new THREE.Color(card.col||0xffffff).lerp(new THREE.Color(0xffffff),.45);
+  if(team===1) tinta.lerp(new THREE.Color(0xff6a55),.35); else tinta.lerp(new THREE.Color(0x7ff0dd),.2);
+  const mats={};
+  m.traverse(o=>{
+    if(!(o.isMesh||o.isSkinnedMesh)) return;
+    const tieni = BASE.some(b=>o.name.indexOf(b)>=0) || cfg.extra.indexOf(o.name)>=0;
+    o.visible=tieni;
+    if(!tieni) return;
+    const id=o.material.uuid;
+    if(!mats[id]){ const mm=o.material.clone(); mm.color.copy(tinta); mats[id]=mm; }
+    o.material=mats[id];
+  });
+
+  const testa=m.getObjectByName('head');
+  if(testa && cfg.cappello) testa.add(cappelloDiPaglia());
+  if(testa && cfg.naso) testa.add(nasoLungo());
+
+  MPROTO[key]=m; return m;
+}
+
+function cappelloDiPaglia(){
+  const g=new THREE.Group();
+  const paglia=M(0xe9cf8c,{rough:.9});
+  part(new THREE.CylinderGeometry(.62,.66,.06,16),paglia,0,0,0,g);
+  part(new THREE.CylinderGeometry(.36,.4,.34,16),paglia,0,.18,0,g);
+  part(new THREE.CylinderGeometry(.41,.41,.1,16),M(0xb8342a,{rough:.9}),0,.08,0,g);
+  g.position.y=.3; g.traverse(o=>{if(o.isMesh)o.castShadow=true;});
+  return g;
+}
+function nasoLungo(){
+  const g=new THREE.Group();
+  const n=part(new THREE.ConeGeometry(.13,.9,8),M(0xd9a47c),0,.05,.5,g);
+  n.rotation.x=Math.PI/2;
+  n.castShadow=true;
+  return g;
+}
+
+function modelMesh(card,team){
+  const proto=modelProto(card.id,team);
+  if(!proto) return null;
+  const cfg=MODELLI[card.id];
+  const w=new THREE.Group();
+  const body=THREE.SkeletonUtils.clone(proto);
+  w.add(body);
+
+  const teamCol=team===0?0x2fb3a3:0xc24534;
+  const ring=part(gRing(.34,.5),M(teamCol,{op:.8,flat:false}),0,.05,0,w);
+  ring.rotation.x=-Math.PI/2;
+
+  const bw=1.0;
+  const bar=new THREE.Group(); bar.name='bar'; bar.position.y=1.75; w.add(bar);
+  part(gPlane(bw+.05,.15),M(0x10161a,{flat:false}),0,0,0,bar);
+  const fg=part(gPlane(bw,.11),M(team===G.me?0x49e3a4:0xf06a4e,{flat:false}),0,0,.01,bar,'barFg');
+  bar.visible=false;
+
+  const mix=new THREE.AnimationMixer(body);
+  w.userData={modello:true,mixer:mix,azioni:{},corrente:null,cfg,bar,barFg:fg,bw,body};
+  scene.add(w); return w;
+}
+
+function azione(ud,nome,vel){
+  if(!CLIPS[nome]) return;
+  let a=ud.azioni[nome];
+  if(!a){ a=ud.mixer.clipAction(CLIPS[nome]); ud.azioni[nome]=a; }
+  a.timeScale=vel||1;
+  if(ud.corrente===a) return;
+  if(ud.corrente) ud.corrente.fadeOut(.15);
+  a.reset().fadeIn(.15).play();
+  ud.corrente=a;
+}
+
+/* i caduti restano a terra un attimo con l'animazione di morte */
+const CADUTI=[];
+function caduto(u){
+  const m=u.mesh;
+  if(!m||!m.userData.modello) return false;
+  const ud=m.userData;
+  ud.bar.visible=false;
+  if(CLIPS['Death_A']){
+    if(ud.corrente) ud.corrente.fadeOut(.1);
+    const a=ud.mixer.clipAction(CLIPS['Death_A']);
+    a.reset(); a.setLoop(THREE.LoopOnce); a.clampWhenFinished=true; a.fadeIn(.1).play();
+    ud.corrente=a;
+  }
+  CADUTI.push({m,t:1.6});
+  return true;
+}
+function stepCaduti(dt){
+  for(let i=CADUTI.length-1;i>=0;i--){
+    const c=CADUTI[i];
+    c.m.userData.mixer.update(dt);
+    c.t-=dt;
+    if(c.t<.5){
+      c.m.position.y-=dt*.9;                     // sprofonda piano
+      c.m.userData.body.traverse(o=>{ if(o.material&&o.material.transparent!==undefined){} });
+    }
+    if(c.t<=0){ scene.remove(c.m); CADUTI.splice(i,1); }
+  }
 }
 
 /* ------------------------- 5. AVVIO DELLA PARTITA ---------------------- */
@@ -1001,7 +1163,7 @@ function stepUnits(dt){
     if(u.hp<=0){
       G.fx.push({kind:'pop',x:u.x,z:u.z,life:.45,max:.45,r:.55,mesh:null,team:u.team});
       puff(u.x,u.z,0xd8d0c0,.5,.8);
-      if(u.mesh) scene.remove(u.mesh);
+      if(u.mesh && !caduto(u)) scene.remove(u.mesh);
       G.units.splice(i,1);
     }
   }
@@ -1171,6 +1333,21 @@ function syncMeshes(dt){
     if(u.spawnT>0){ m.scale.setScalar(.6+.4*(1-u.spawnT/.7)); }
     else if(m.scale.x!==1) m.scale.setScalar(1);
 
+    if(ud.modello){
+      ud.mixer.update(dt);
+      if(walking) azione(ud,'Walking_A',clamp(card.spd/2.0,.7,1.9));
+      else {
+        const cl=CLIPS[ud.cfg.atk];
+        azione(ud,ud.cfg.atk, cl?clamp(cl.duration/Math.max(.45,card.atk),.5,2.2):1);
+      }
+      if(ud.barFg){
+        const f=u.hp/u.max;
+        ud.bar.visible=f<.999;
+        if(ud.bar.visible){ setBarFg(ud.barFg,ud.bw,f); ud.bar.quaternion.copy(camera.quaternion); }
+      }
+      continue;
+    }
+
     const body=ud.body;
     if(walking){
       u.anim+=dt*card.spd*3.4;
@@ -1268,6 +1445,7 @@ function syncMeshes(dt){
     }
     if(f.life<=0){ scene.remove(f.mesh); if(f.mesh.material) f.mesh.material.dispose&&f.mesh.material.dispose(); G.fx.splice(i,1); }
   }
+  stepCaduti(dt);
   updateDeployZone(et);
   updateSea();
 }
@@ -1413,10 +1591,13 @@ function portrait(id){
   const x=cv.getContext('2d'); x.scale(S,S);
   x.lineJoin='round'; x.lineCap='round';
   const hex=n=>'#'+n.toString(16).padStart(6,'0');
+  const base=card.col!==undefined?card.col:0x2a6fb0;
+  const mix=(c,f)=>{const r=(c>>16&255),gg=(c>>8&255),b=c&255;
+    return 'rgb('+Math.round(r+(255-r)*f)+','+Math.round(gg+(255-gg)*f)+','+Math.round(b+(255-b)*f)+')';};
   const g=x.createLinearGradient(0,0,0,h);
-  g.addColorStop(0,'#1d5a72'); g.addColorStop(1,'#0a2634');
+  g.addColorStop(0,mix(base,.55)); g.addColorStop(1,mix(base,.05));
   x.fillStyle=g; x.fillRect(0,0,w,h);
-  x.fillStyle='rgba(255,255,255,.06)';
+  x.fillStyle='rgba(255,255,255,.10)';
   for(let i=-h;i<w;i+=14) { x.save(); x.translate(i,0); x.rotate(.35); x.fillRect(0,0,5,h*1.6); x.restore(); }
   const cx=w/2, cy=h*.52, r=30;
 
@@ -1711,7 +1892,9 @@ const Net = {
       }
     }
     for(let i=G.units.length-1;i>=0;i--){
-      if(!seen[G.units[i].id]){ if(G.units[i].mesh)scene.remove(G.units[i].mesh); G.units.splice(i,1); }
+      if(!seen[G.units[i].id]){ const q=G.units[i];
+        if(q.mesh && !caduto(q)) scene.remove(q.mesh);
+        G.units.splice(i,1); }
     }
     if(st.o&&!G.over){G.over=true;G.phase='over';G.result={winner:st.w,why:'',down:[shipsDown(0),shipsDown(1)]};showEnd();}
   },
@@ -1846,9 +2029,14 @@ function showEnd(){
 }
 
 /* ------------------------------ AVVIO ---------------------------------- */
+function verTag(){
+  const t=document.getElementById('verTag');
+  if(t) t.textContent='Grand Line Clash '+VERSION+' · '+MODEL_STATO;
+}
 init3D();
 loadStats();
-document.getElementById('verTag').textContent='Grand Line Clash '+VERSION;
+loadModels();
+verTag();
 document.getElementById('codeIn').addEventListener('input',e=>{e.target.value=e.target.value.toUpperCase();});
 if('serviceWorker' in navigator && location.protocol.startsWith('http')){
   addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));
