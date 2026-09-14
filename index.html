@@ -222,7 +222,7 @@ input{width:100%;padding:12px;border-radius:10px;border:1px solid rgba(239,220,1
 // Per giocare online incolla qui la config del tuo progetto Firebase
 // (Realtime Database). Lasciando null funziona solo l'allenamento offline.
 const FIREBASE_CONFIG = null;
-const VERSION = 'v8';    // scritto in basso nel menu: serve a capire se il telefono
+const VERSION = 'v9';    // scritto in basso nel menu: serve a capire se il telefono
                          // ha davvero preso l'ultima versione o una in cache
 /* esempio:
 const FIREBASE_CONFIG = {
@@ -826,17 +826,18 @@ const CLIPS={}, BODIES={}, MPROTO={};
 const BASE=['_Body','_Head','_ArmLeft','_ArmRight','_LegLeft','_LegRight','_Head_Hooded'];
 
 // corpo, scala, parti extra da mostrare, animazione d'attacco, accessori
+const ALT_MODELLO=2.25;          // altezza del corpo (armi escluse) nelle unità del modello
 const MODELLI={
-  0:{f:'barbarian.glb',   s:.055, extra:[],                          atk:'Unarmed_Melee_Attack_Punch_A', cappello:true},
-  1:{f:'knight.glb',      s:.052, extra:['1H_Sword','1H_Sword_Offhand'], atk:'1H_Melee_Attack_Slice_Diagonal'},
-  2:{f:'rogue.glb',       s:.05,  extra:[],                          atk:'Unarmed_Melee_Attack_Kick'},
-  3:{f:'mage.glb',        s:.048, extra:['1H_Wand','Mage_Hat'],      atk:'Spellcast_Shoot'},
-  4:{f:'rogue-hooded.glb',s:.05,  extra:['2H_Crossbow'],             atk:'1H_Ranged_Shoot', naso:true},
-  5:{f:'knight.glb',      s:.07,  extra:['Knight_Helmet','2H_Sword'],atk:'2H_Melee_Attack_Chop'},
-  6:{f:'rogue.glb',       s:.042, extra:['Knife'],                   atk:'1H_Melee_Attack_Slice_Diagonal'},
-  8:{f:'barbarian.glb',   s:.045, extra:['Barbarian_Hat'],           atk:'Unarmed_Melee_Attack_Punch_A'},
-  9:{f:'rogue-hooded.glb',s:.052, extra:['Knife'],                   atk:'1H_Melee_Attack_Slice_Diagonal'},
-  10:{f:'mage.glb',       s:.048, extra:['1H_Wand'],                 atk:'Spellcast_Shoot'}
+  0:{f:'barbarian.glb',   s:.62, extra:[],                              atk:'Unarmed_Melee_Attack_Punch_A', cappello:true},
+  1:{f:'knight.glb',      s:.60, extra:['1H_Sword','1H_Sword_Offhand'], atk:'1H_Melee_Attack_Slice_Diagonal'},
+  2:{f:'rogue.glb',       s:.58, extra:[],                              atk:'Unarmed_Melee_Attack_Kick'},
+  3:{f:'mage.glb',        s:.56, extra:['1H_Wand','Mage_Hat'],          atk:'Spellcast_Shoot'},
+  4:{f:'rogue-hooded.glb',s:.58, extra:['2H_Crossbow'],                 atk:'1H_Ranged_Shoot', naso:true},
+  5:{f:'knight.glb',      s:.85, extra:['Knight_Helmet','2H_Sword'],    atk:'2H_Melee_Attack_Chop'},
+  6:{f:'rogue.glb',       s:.46, extra:['Knife'],                       atk:'1H_Melee_Attack_Slice_Diagonal'},
+  8:{f:'barbarian.glb',   s:.52, extra:['Barbarian_Hat'],               atk:'Unarmed_Melee_Attack_Punch_A'},
+  9:{f:'rogue-hooded.glb',s:.60, extra:['Knife'],                       atk:'1H_Melee_Attack_Slice_Diagonal'},
+  10:{f:'mage.glb',       s:.56, extra:['1H_Wand'],                     atk:'Spellcast_Shoot'}
 };
 
 function loadModels(){
@@ -914,11 +915,12 @@ function modelMesh(card,team){
   w.add(body);
 
   const teamCol=team===0?0x2fb3a3:0xc24534;
-  const ring=part(gRing(.34,.5),M(teamCol,{op:.8,flat:false}),0,.05,0,w);
+  const alt=ALT_MODELLO*cfg.s;                 // altezza reale sul campo
+  const ring=part(gRing(alt*.22,alt*.33),M(teamCol,{op:.8,flat:false}),0,.05,0,w);
   ring.rotation.x=-Math.PI/2;
 
-  const bw=1.0;
-  const bar=new THREE.Group(); bar.name='bar'; bar.position.y=1.75; w.add(bar);
+  const bw=Math.max(.8,alt*.62);
+  const bar=new THREE.Group(); bar.name='bar'; bar.position.y=alt+.3; w.add(bar);
   part(gPlane(bw+.05,.15),M(0x10161a,{flat:false}),0,0,0,bar);
   const fg=part(gPlane(bw,.11),M(team===G.me?0x49e3a4:0xf06a4e,{flat:false}),0,0,.01,bar,'barFg');
   bar.visible=false;
