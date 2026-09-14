@@ -112,6 +112,7 @@ input{width:100%;padding:12px;border-radius:10px;border:1px solid rgba(239,220,1
 #endTitle{font-family:Cinzel,serif;font-size:34px;text-align:center;margin-bottom:4px}
 #endSub{text-align:center;font-size:13px;opacity:.8;margin-bottom:14px}
 .hidden{display:none !important}
+#verTag{position:fixed;bottom:calc(var(--safe-b) + 6px);right:10px;font-size:10px;opacity:.45;letter-spacing:.08em}
 #statsList{max-height:58vh;overflow:auto;-webkit-overflow-scrolling:touch;margin:-4px -4px 10px;padding:4px}
 .srow{display:flex;gap:9px;align-items:center;padding:8px 6px;border-bottom:1px solid rgba(239,220,180,.13)}
 .srow:last-child{border-bottom:none}
@@ -152,6 +153,7 @@ input{width:100%;padding:12px;border-radius:10px;border:1px solid rgba(239,220,1
 <div id="menu">
   <div class="brand">Grand Line<br>Clash<em>ciurma contro ciurma</em></div>
 
+  <div id="verTag"></div>
   <div class="panel" id="pHome">
     <h2>Salpa</h2>
     <p>Tre navi per parte, sei minuti, elisir che ricarica. Affonda l'ammiraglia avversaria o arriva in fondo con più navi abbattute.</p>
@@ -215,6 +217,8 @@ input{width:100%;padding:12px;border-radius:10px;border:1px solid rgba(239,220,1
 // Per giocare online incolla qui la config del tuo progetto Firebase
 // (Realtime Database). Lasciando null funziona solo l'allenamento offline.
 const FIREBASE_CONFIG = null;
+const VERSION = 'v6';    // scritto in basso nel menu: serve a capire se il telefono
+                         // ha davvero preso l'ultima versione o una in cache
 /* esempio:
 const FIREBASE_CONFIG = {
   apiKey:"...", authDomain:"xxx.firebaseapp.com",
@@ -367,18 +371,31 @@ function pivot(x,y,z,parent,name){
 }
 
 const SKIN=0xf0c6a0, SKIN_D=0xd9a47c;
+// contorno scuro: una copia leggermente più grande, disegnata al contrario.
+// È il trucco che dà il tratto da cartone animato.
+let OUT_MAT=null;
+function outline(){ return OUT_MAT||(OUT_MAT=new THREE.MeshBasicMaterial({color:0x13232c,side:THREE.BackSide})); }
 
 function init3D(){
   const cv=document.getElementById('c');
   renderer=new THREE.WebGLRenderer({canvas:cv,antialias:true,powerPreference:'high-performance'});
   renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+  renderer.shadowMap.enabled=true;
+  renderer.shadowMap.type=THREE.PCFSoftShadowMap;
   scene=new THREE.Scene();
   scene.background=new THREE.Color(0x8fd3e8);
   scene.fog=new THREE.Fog(0x8fd3e8,55,120);
   camera=new THREE.PerspectiveCamera(46,1,1,260);
 
   scene.add(new THREE.HemisphereLight(0xcdeeff,0x3a5a42,.95));
-  const sun=new THREE.DirectionalLight(0xfff2d4,1.0); sun.position.set(-16,28,12); scene.add(sun);
+  const sun=new THREE.DirectionalLight(0xfff2d4,1.15); sun.position.set(-18,30,14);
+  sun.castShadow=true;
+  sun.shadow.mapSize.width=1024; sun.shadow.mapSize.height=1024;
+  sun.shadow.camera.left=-14; sun.shadow.camera.right=14;
+  sun.shadow.camera.top=26; sun.shadow.camera.bottom=-26;
+  sun.shadow.camera.near=2; sun.shadow.camera.far=80;
+  sun.shadow.bias=-.0012;
+  scene.add(sun); scene.add(sun.target);
   const fill=new THREE.DirectionalLight(0x86c4ff,.35); fill.position.set(14,10,-16); scene.add(fill);
 
   seaGeo=new THREE.PlaneGeometry(260,260,54,54); seaGeo.rotateX(-Math.PI/2);
@@ -417,8 +434,8 @@ function buildArena(){
   const len=ARENA_Z-RIVER;
   [1,-1].forEach(s=>{
     const cz=s*(RIVER+len/2);
-    part(gBox(ARENA_W,1.0,len),M(0xd9c48e,{rough:1}),0,-.5,cz,g);          // sabbia
-    part(gBox(ARENA_W-1.4,.16,len-1.2),M(0x7fa855),0,.07,cz,g);            // prato
+    part(gBox(ARENA_W,1.0,len),M(0xd9c48e,{rough:1}),0,-.5,cz,g).receiveShadow=true;   // sabbia
+    part(gBox(ARENA_W-1.4,.16,len-1.2),M(0x7fa855),0,.07,cz,g).receiveShadow=true;     // prato
     // strisce di erba più chiara: leggibilità delle corsie
     for(let i=0;i<5;i++){
       const w=(ARENA_W-1.4)/5;
@@ -515,7 +532,8 @@ function shipMesh(team,kind){
   const teamCol=team===0?0x2fb3a3:0xc24534;
   const hull=new THREE.Group(); g.add(hull); g.userData.hull=hull;
 
-  part(gBox(W,H,L),M(wood),0,H/2,0,hull);
+  part(gBox(W,H,L),M(wood),0,H/2,0,hull).castShadow=true;
+  part(gBox(W*1.1,H*1.12,L*1.05),outline(),0,H/2,0,hull);
   part(gBox(W*.82,H*.5,L*.96),M(wood2),0,H*.95,0,hull);                 // ponte
   part(gBox(W+.55,.3,L+.5),M(wood2),0,H+.1,0,hull);                     // impavesata
   [-1,1].forEach(s=>part(gBox(.16,.5,L+.4),M(wood2),s*(W/2+.2),H+.35,0,hull));
@@ -567,6 +585,7 @@ function shipMesh(team,kind){
       c.rotation.z=Math.PI/2;
     });
   }
+  hull.traverse(o=>{ if(o.isMesh && o.material!==OUT_MAT) o.castShadow=true; });
   g.userData.big=big; g.userData.team=team;
   scene.add(g); return g;
 }
@@ -598,8 +617,9 @@ function charProto(cardId,team){
     part(gBox(.2*s,.1*s,.28*s),M(0x3a2a20),0,-.44*s,.04*s,p);           // scarpa
     legs.push(p);
   });
-  // busto
+  // busto (con contorno scuro attorno)
   part(gBox(.42*s,.5*s,.26*s),M(card.col),0,.68*s,0,body,'torso');
+  part(gBox(.42*s*1.16,.5*s*1.1,.26*s*1.25),outline(),0,.68*s,0,body);
   part(gCyl(.23*s,.23*s,.1*s,9),M(card.belt!==undefined?card.belt:0x4a3526),0,.44*s,0,body);
   // braccia con perno alla spalla
   [-1,1].forEach(k=>{
@@ -610,10 +630,12 @@ function charProto(cardId,team){
   // testa
   const head=new THREE.Group(); head.name='head'; head.position.y=1.02*s; body.add(head);
   part(gSph(.22*s,11,9),M(SKIN),0,0,0,head);
+  part(gSph(.22*s*1.14,12,10),outline(),0,0,0,head);
   part(gCap(.235*s,1.25),M(card.acc),0,.03*s,0,head);                   // capelli
   [-1,1].forEach(k=>part(gSph(.032*s,6,5),M(0x241a16),k*.085*s,.01*s,.2*s,head));  // occhi
 
   extras(cardId,head,body,g,s,card);
+  body.traverse(o=>{ if(o.isMesh && o.material!==OUT_MAT) o.castShadow=true; });
 
   // barra vita: colore già fissato per squadra, così i cloni non toccano materiali
   const bar=new THREE.Group(); bar.name='bar'; bar.position.y=1.5*s; g.add(bar);
@@ -622,7 +644,7 @@ function charProto(cardId,team){
   fg.userData={w:.88*s};
   bar.visible=false;
   // ombra
-  const sh=part(gRing(0,.34*s),M(0x123040,{op:.3,flat:false}),0,.05,0,g);
+  const sh=part(gRing(0,.34*s),M(0x123040,{op:.16,flat:false}),0,.05,0,g);
   sh.rotation.x=-Math.PI/2;
 
   PROTO[key]=g; return g;
@@ -715,6 +737,29 @@ function unitMesh(card,team){
   scene.add(m); return m;
 }
 
+// numero dei punti vita sopra ogni nave: si deve vedere a colpo d'occhio
+// a che punto siamo, come nelle torri di Clash Royale
+function makeHpLabel(){
+  const cv=document.createElement('canvas'); cv.width=256; cv.height=88;
+  const tex=new THREE.CanvasTexture(cv);
+  const m=new THREE.Mesh(gPlane(2.3,.79),
+    new THREE.MeshBasicMaterial({map:tex,transparent:true,depthTest:false}));
+  m.renderOrder=20; m.userData={cv,tex,last:-1};
+  scene.add(m); return m;
+}
+function setHpLabel(m,hp,mia){
+  const v=Math.max(0,Math.round(hp));
+  if(m.userData.last===v) return;
+  m.userData.last=v;
+  const cv=m.userData.cv, x=cv.getContext('2d');
+  x.clearRect(0,0,cv.width,cv.height);
+  x.font='800 62px Inter, system-ui, sans-serif';
+  x.textAlign='center'; x.textBaseline='middle';
+  x.lineJoin='round'; x.lineWidth=12; x.strokeStyle='#06171f';
+  x.strokeText(v,128,46); x.fillStyle=mia?'#9dffe8':'#ffb9a8'; x.fillText(v,128,46);
+  m.userData.tex.needsUpdate=true;
+}
+
 function makeBar(w,col){
   const grp=new THREE.Group();
   grp.add(new THREE.Mesh(gPlane(w,.17),new THREE.MeshBasicMaterial({color:0x0d1418})));
@@ -773,7 +818,7 @@ function newTower(team,kind,x,z){
 
 function resetMatch(){
   G.units.forEach(u=>u.mesh&&scene.remove(u.mesh));
-  G.towers.forEach(t=>{t.mesh&&scene.remove(t.mesh); t.bar&&scene.remove(t.bar);});
+  G.towers.forEach(t=>{t.mesh&&scene.remove(t.mesh); t.bar&&scene.remove(t.bar); t.label&&scene.remove(t.label);});
   G.projs.forEach(p=>scene.remove(p.mesh)); G.fx.forEach(f=>scene.remove(f.mesh));
   G.units=[];G.towers=[];G.projs=[];G.fx=[];
   clearProtos();
@@ -787,6 +832,8 @@ function resetMatch(){
       t.mesh.position.set(t.x,0,t.z);
       t.mesh.rotation.y = team===0?Math.PI:0;
       t.bar=makeBar(k==='flag'?2.0:1.6, team===G.me?0x49e3a4:0xf06a4e);
+      t.label=makeHpLabel();
+      t.label.position.set(t.x,(k==='flag'?2.5:2.0)+.62,t.z);
       t.bar.position.set(t.x,k==='flag'?2.5:2.0,t.z); scene.add(t.bar);
       setBar(t.bar,1,team);
       G.towers.push(t);
@@ -840,6 +887,7 @@ function castSpell(team,card,x,z){
 function sinkShip(t){
   t.alive=false; t.hp=0; t.sinking=0;
   if(t.bar) t.bar.visible=false;
+  if(t.label) t.label.visible=false;
   G.fx.push({kind:'sink',x:t.x,z:t.z,life:1.3,max:1.3,r:2.6,mesh:null,team:t.team});
 }
 
@@ -1167,6 +1215,7 @@ function syncMeshes(dt){
     t.mesh.position.y=Math.sin(et*1.2+t.x)*.08;
     t.mesh.rotation.z=Math.sin(et*.9+t.z)*.015;
     const f=t.hp/t.max;
+    if(t.label&&t.label.visible){ setHpLabel(t.label,t.hp,t.team===G.me); t.label.quaternion.copy(camera.quaternion); }
     if(f<.45 && Math.random()<dt*(f<.2?4:2)) puff(t.x+rnd(-.8,.8),t.z+rnd(-1.5,1.5),0x3b3b3b,1.4,1.6);
     if(t.bar&&t.bar.visible){ setBar(t.bar,f,t.team); t.bar.quaternion.copy(camera.quaternion); }
   }
@@ -1280,9 +1329,20 @@ function updateShipMaterials(){
   }
 }
 
+// rete di sicurezza: se le ombre affaticano il telefono le spengo da solo
+let fpsT=0,fpsN=0,perfChecked=false;
+function disableShadows(){
+  renderer.shadowMap.enabled=false;
+  scene.traverse(o=>{ if(o.material) o.material.needsUpdate=true; });
+}
+
 let acc=0;
 function frame(){
   const dt=Math.min(clock3.getDelta(),.05);
+  if(!perfChecked && G.phase==='play'){
+    fpsT+=dt; fpsN++;
+    if(fpsT>4){ if(fpsN/fpsT<26) disableShadows(); perfChecked=true; }
+  }
   if(G.phase==='countdown'){
     G.countdown-=dt;
     setHint(G.countdown>0?String(Math.ceil(G.countdown)):'VIA!');
@@ -1763,7 +1823,7 @@ const UI={
     Net.leave();
     G.phase='menu'; G.mode='menu'; G.over=false;
     G.units.forEach(u=>u.mesh&&scene.remove(u.mesh));
-    G.towers.forEach(t=>{t.mesh&&scene.remove(t.mesh);t.bar&&scene.remove(t.bar);});
+    G.towers.forEach(t=>{t.mesh&&scene.remove(t.mesh);t.bar&&scene.remove(t.bar);t.label&&scene.remove(t.label);});
     G.units=[];G.towers=[];
     hud.classList.remove('on');
     panel('pHome');
@@ -1788,6 +1848,7 @@ function showEnd(){
 /* ------------------------------ AVVIO ---------------------------------- */
 init3D();
 loadStats();
+document.getElementById('verTag').textContent='Grand Line Clash '+VERSION;
 document.getElementById('codeIn').addEventListener('input',e=>{e.target.value=e.target.value.toUpperCase();});
 if('serviceWorker' in navigator && location.protocol.startsWith('http')){
   addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));
