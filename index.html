@@ -222,7 +222,7 @@ input{width:100%;padding:12px;border-radius:10px;border:1px solid rgba(239,220,1
 // Per giocare online incolla qui la config del tuo progetto Firebase
 // (Realtime Database). Lasciando null funziona solo l'allenamento offline.
 const FIREBASE_CONFIG = null;
-const VERSION = 'v10';    // scritto in basso nel menu: serve a capire se il telefono
+const VERSION = 'v12';    // scritto in basso nel menu: serve a capire se il telefono
                          // ha davvero preso l'ultima versione o una in cache
 /* esempio:
 const FIREBASE_CONFIG = {
@@ -263,8 +263,8 @@ const DECK = [0,1,2,3,4,5,6,7];   // le 8 carte in gioco
 
 // statistiche delle navi (sovrascritte da personaggi.csv se presente)
 const SHIPS = {
-  side:{hp:2400,dmg:70,atk:.8,rng:10.8,r:.75},
-  flag:{hp:3600,dmg:90,atk:.8,rng:9.8,r:.95}
+  side:{hp:2400,dmg:70,atk:.8,rng:10.8,r:1.15},
+  flag:{hp:3600,dmg:90,atk:.8,rng:9.8,r:1.5}
 };
 
 /* --- lettura di personaggi.csv ---------------------------------------
@@ -480,11 +480,12 @@ function buildArena(){
   [1,-1].forEach(s=>{
     const cz=s*(RIVER+len/2);
     part(gBox(ARENA_W,1.0,len),M(0xd9c48e,{rough:1}),0,-.5,cz,g).receiveShadow=true;   // sabbia
-    part(gBox(ARENA_W-1.4,.16,len-1.2),M(0x6b9a3f),0,.07,cz,g).receiveShadow=true;     // prato
+    part(gBox(ARENA_W-1.4,.16,len-1.2),M(0x5f8f37),0,.07,cz,g).receiveShadow=true;     // prato
+    part(gBox(ARENA_W-2.6,.02,len-2.4),M(0x74a844),0,.16,cz,g);                        // radura chiara
     // strisce di erba più chiara: leggibilità delle corsie
     for(let i=0;i<5;i++){
       const w=(ARENA_W-1.4)/5;
-      if(i%2) part(gBox(w,.02,len-1.2),M(0x7cb04a),-(ARENA_W-1.4)/2+w*(i+.5),.16,cz,g);
+      if(i%2) part(gBox(w,.025,len-1.2),M(0x6d9d3e),-(ARENA_W-1.4)/2+w*(i+.5),.16,cz,g);
     }
     part(gBox(ARENA_W+.5,.4,.5),M(0x8a7345),0,-.18,s*RIVER,g);             // banchina
     // scogliera dietro alle navi
@@ -516,7 +517,7 @@ function buildGridHalf(sign){
   for(let z=Math.ceil(z0);z<=Math.floor(z1);z++) v.push(x0,y,sign*z, x1,y,sign*z);
   const geo=new THREE.BufferGeometry();
   geo.setAttribute('position',new THREE.Float32BufferAttribute(v,3));
-  const mat=new THREE.LineBasicMaterial({color:0x06212c,transparent:true,opacity:.18,depthWrite:false});
+  const mat=new THREE.LineBasicMaterial({color:0x2e5c22,transparent:true,opacity:.09,depthWrite:false});
   const ls=new THREE.LineSegments(geo,mat); scene.add(ls); return ls;
 }
 
@@ -541,8 +542,8 @@ function updateDeployZone(et){
   // la griglia della tua metà si accende quando hai una carta in mano pronta
   if(GRID[0]&&GRID[1]){
     const mine=G.me===0?0:1;
-    GRID[mine].material.opacity=on?.5:.2;
-    GRID[1-mine].material.opacity=.12;
+    GRID[mine].material.opacity=on?.42:.09;
+    GRID[1-mine].material.opacity=.05;
   }
   zoneMesh.visible=on;
   if(!on) return;
@@ -563,7 +564,7 @@ function shipModel(team,kind){
   const big=kind==='flag';
   const g=new THREE.Group();
   const m=src.clone(true);
-  const sc=(big?3.9:2.8)/81;
+  const sc=(big?6.2:4.6)/81;
   m.scale.setScalar(sc);
   m.position.z=8*sc;
   g.add(m);
@@ -579,10 +580,10 @@ function shipModel(team,kind){
     o.material = Array.isArray(o.material) ? o.material.map(copia) : copia(o.material);
   });
   // stendardo della squadra in cima all'albero
-  const flag=part(gPlane(big?1.1:.85,big?.7:.55),M(teamCol,{side:2}),0,(big?3.0:2.3),0,g);
-  flag.position.x=big?.55:.42;
+  const flag=part(gPlane(big?1.6:1.25,big?1.0:.8),M(teamCol,{side:2}),0,(big?4.7:3.6),0,g);
+  flag.position.x=big?.8:.62;
 
-  const lamp=part(gSph(big?.16:.12,12,10),M(0xffd070,{em:0}),0,big?.95:.7,big?-1.5:-1.1,g);
+  const lamp=part(gSph(big?.26:.2,12,10),M(0xffd070,{em:0}),0,big?1.5:1.1,big?-2.4:-1.8,g);
   g.userData.lamp=lamp; g.userData.vele=vele; g.userData.big=big; g.userData.team=team;
   g.userData.rotY = team===0?0:Math.PI;          // la prua guarda l'avversario
   g.rotation.y=g.userData.rotY;
@@ -815,7 +816,7 @@ function unitMesh(card,team){
 function makeHpLabel(){
   const cv=document.createElement('canvas'); cv.width=256; cv.height=88;
   const tex=new THREE.CanvasTexture(cv);
-  const m=new THREE.Mesh(gPlane(2.3,.79),
+  const m=new THREE.Mesh(gPlane(1.7,.58),
     new THREE.MeshBasicMaterial({map:tex,transparent:true,depthTest:false}));
   m.renderOrder=20; m.userData={cv,tex,last:-1};
   scene.add(m); return m;
@@ -890,11 +891,24 @@ const BASE=['_Body','_Head','_ArmLeft','_ArmRight','_LegLeft','_LegRight','_Head
 
 // corpo, scala, parti extra da mostrare, animazione d'attacco, accessori
 const ALT_MODELLO=2.25;          // altezza del corpo (armi escluse) nelle unità del modello
+// capelli: tipo e colore, montati sull'osso della testa
+const CAPELLI={
+  0:{tipo:'corti',  col:0x1b1613},                 // Rufy, neri sotto il cappello
+  1:{tipo:'bandana',col:0x2f7d4f,cap:0x2f7d4f},    // Zoro, verde
+  2:{tipo:'ciuffo', col:0xe8c45a},                 // Sanji, biondo
+  3:{tipo:'lunghi', col:0xe87a1f},                 // Nami, arancione
+  4:{tipo:'bandana',col:0x2a1f17,cap:0xd8c14a},    // Usop, bandana gialla
+  5:{tipo:'punk',   col:0x8fd8f5},                 // Franky, azzurro
+  6:{tipo:'bandana',col:0x2a1f17,cap:0xb8342a},    // Ciurma, bandana rossa
+  8:{tipo:'corti',  col:0x8a5a34},
+  9:{tipo:'afro',   col:0x201c26},                 // Brook
+  10:{tipo:'lunghi',col:0x241a16}                  // Robin
+};
 const MODELLI={
   0:{f:'barbarian.glb',   s:.88, extra:[],                              atk:'Unarmed_Melee_Attack_Punch_A', cappello:true},
   1:{f:'knight.glb',      s:.86, extra:['1H_Sword','1H_Sword_Offhand'], atk:'1H_Melee_Attack_Slice_Diagonal'},
   2:{f:'rogue.glb',       s:.84, extra:[],                              atk:'Unarmed_Melee_Attack_Kick'},
-  3:{f:'mage.glb',        s:.80, extra:['1H_Wand','Mage_Hat'],          atk:'Spellcast_Shoot'},
+  3:{f:'mage.glb',        s:.80, extra:['1H_Wand'],                      atk:'Spellcast_Shoot'},
   4:{f:'rogue-hooded.glb',s:.84, extra:['2H_Crossbow'],                 atk:'1H_Ranged_Shoot', naso:true},
   5:{f:'knight.glb',      s:1.18, extra:['Knight_Helmet','2H_Sword'],    atk:'2H_Melee_Attack_Chop'},
   6:{f:'rogue.glb',       s:.66, extra:['Knife'],                       atk:'1H_Melee_Attack_Slice_Diagonal'},
@@ -940,6 +954,7 @@ function loadModels(){
   const fatto=()=>{
     if(--restano>0||fallito) return;
     MODEL_OK=true; MODEL_STATO='modelli 3D'; verTag();
+    setTimeout(generaRitratti,80);       // ritratti delle carte dai modelli veri
   };
   L.load('animazioni.glb', g=>{ g.animations.forEach(c=>CLIPS[c.name]=c); fatto(); }, undefined, errore);
   file.forEach(f=>L.load(f, g=>{
@@ -957,25 +972,76 @@ function modelProto(cardId,team){
   const m=THREE.SkeletonUtils.clone(src);
   m.scale.setScalar(cfg.s);
 
-  // una sola texture per modello: la coloro per distinguere personaggio e squadra
-  const tinta=new THREE.Color(card.col||0xffffff).lerp(new THREE.Color(0xffffff),.45);
-  if(team===1) tinta.lerp(new THREE.Color(0xff6a55),.35); else tinta.lerp(new THREE.Color(0x7ff0dd),.2);
+  // il modello ha una texture sola: coloro il vestito col colore del personaggio
+  // e lascio naturali testa e braccia, altrimenti viene tutto della stessa tinta
+  const vestito=new THREE.Color(card.col||0xffffff).lerp(new THREE.Color(0xffffff),.3);
+  if(team===1) vestito.lerp(new THREE.Color(0xff7a63),.3);
+  const pelle=new THREE.Color(0xffffff);
   const mats={};
   m.traverse(o=>{
     if(!(o.isMesh||o.isSkinnedMesh)) return;
     const tieni = BASE.some(b=>o.name.indexOf(b)>=0) || cfg.extra.indexOf(o.name)>=0;
     o.visible=tieni;
     if(!tieni) return;
-    const id=o.material.uuid;
-    if(!mats[id]){ const mm=o.material.clone(); mm.color.copy(tinta); mats[id]=mm; }
+    const corpo = /_Body|_Leg/.test(o.name);
+    const col = corpo?vestito:pelle;
+    const id=o.material.uuid+'|'+(corpo?'v':'p');
+    if(!mats[id]){ const mm=o.material.clone(); mm.color.copy(col); mats[id]=mm; }
     o.material=mats[id];
   });
 
   const testa=m.getObjectByName('head');
-  if(testa && cfg.cappello) testa.add(cappelloDiPaglia());
-  if(testa && cfg.naso) testa.add(nasoLungo());
+  if(testa){
+    const cap=capelli(cardId);
+    if(cap) testa.add(cap);
+    if(cfg.cappello) testa.add(cappelloDiPaglia());
+    if(cfg.naso) testa.add(nasoLungo());
+  }
 
   MPROTO[key]=m; return m;
+}
+
+// i modelli hanno una sola texture, quindi i capelli glieli monto sopra:
+// è l'unico modo per avere Sanji biondo e Nami arancione davvero
+function capelli(id){
+  const c=CAPELLI[id]; if(!c) return null;
+  const g=new THREE.Group();
+  const pelo=M(c.col,{rough:.85});
+  const calotta=(r,h)=>{
+    const k=part(new THREE.SphereGeometry(r,14,10,0,Math.PI*2,0,1.35),pelo,0,h||0,0,g);
+    return k;
+  };
+  if(c.tipo==='corti'){ calotta(.52,.06); }
+  if(c.tipo==='ciuffo'){
+    calotta(.52,.06);
+    const f=part(new THREE.BoxGeometry(.5,.16,.42),pelo,.2,.16,.3,g);
+    f.rotation.z=-.35;                                   // ciuffo sull'occhio
+  }
+  if(c.tipo==='lunghi'){
+    calotta(.54,.06);
+    [-1,1].forEach(k=>{
+      const t=part(new THREE.BoxGeometry(.22,1.15,.3),pelo,k*.42,-.5,-.05,g);
+      t.rotation.z=k*.06;
+    });
+    part(new THREE.BoxGeometry(.62,.9,.22),pelo,0,-.42,-.36,g);
+  }
+  if(c.tipo==='bandana'){
+    calotta(.52,.04);
+    part(new THREE.CylinderGeometry(.545,.545,.24,16),M(c.cap||0xb8342a,{rough:.9}),0,.16,0,g);
+    const coda=part(new THREE.BoxGeometry(.14,.5,.1),M(c.cap||0xb8342a,{rough:.9}),-.5,-.05,-.2,g);
+    coda.rotation.z=.3;
+  }
+  if(c.tipo==='punk'){
+    calotta(.5,.04);
+    for(let i=-1;i<=1;i++){
+      const p=part(new THREE.ConeGeometry(.2,.75,7),pelo,i*.26,.42,0,g);
+      p.rotation.z=i*.3;
+    }
+  }
+  if(c.tipo==='afro'){ part(new THREE.SphereGeometry(.8,14,12),pelo,0,.3,0,g); }
+  g.position.y=.16;
+  g.traverse(o=>{ if(o.isMesh) o.castShadow=true; });
+  return g;
 }
 
 function cappelloDiPaglia(){
@@ -993,6 +1059,80 @@ function nasoLungo(){
   n.rotation.x=Math.PI/2;
   n.castShadow=true;
   return g;
+}
+
+/* Ritratti delle carte fotografati dai modelli veri: costruisco il personaggio
+   in una scenetta a parte, lo inquadro dalla vita in su e leggo i pixel.
+   Così la carta mostra esattamente quello che schieri in campo.            */
+function generaRitratti(){
+  try{ ritrattiDaiModelli(); }
+  catch(e){ console.warn('ritratti dai modelli non riusciti, uso quelli disegnati',e); }
+}
+
+function ritrattiDaiModelli(){
+  if(!MODEL_OK||!renderer||!renderer.readRenderTargetPixels) return;
+  const W=216,H=288;
+  let rt;
+  try{ rt=new THREE.WebGLRenderTarget(W,H); }catch(e){ return; }
+  const sc=new THREE.Scene();
+  sc.add(new THREE.HemisphereLight(0xffffff,0x8899aa,1.15));
+  const luce=new THREE.DirectionalLight(0xfff6e2,1.25); luce.position.set(2.5,4,5); sc.add(luce);
+  const controluce=new THREE.DirectionalLight(0x9fd8ff,.5); controluce.position.set(-3,2,-4); sc.add(controluce);
+  const cam=new THREE.PerspectiveCamera(26,W/H,.05,60);
+  const buf=new Uint8Array(W*H*4);
+  const cv=document.createElement('canvas'); cv.width=W; cv.height=H;
+  const cx=cv.getContext('2d');
+  const img=cx.createImageData(W,H);
+  const puoiSfondo = typeof renderer.setClearColor==='function';
+  const clearOld = (puoiSfondo && renderer.getClearColor) ? new THREE.Color() : null;
+  if(clearOld) renderer.getClearColor(clearOld);
+  const alphaOld = renderer.getClearAlpha ? renderer.getClearAlpha() : 1;
+
+  Object.keys(MODELLI).forEach(k=>{
+    const id=+k;
+    const proto=modelProto(id,0);
+    if(!proto) return;
+    const m=THREE.SkeletonUtils.clone(proto);
+    m.position.set(0,0,0); sc.add(m);
+    const box=new THREE.Box3().setFromObject(m);
+    const alt=Math.max(.2,box.max.y-box.min.y);
+    const occhi=box.min.y+alt*.82;
+    cam.position.set(alt*.22,occhi,alt*1.25);
+    cam.lookAt(0,occhi-alt*.06,0);
+
+    if(puoiSfondo) renderer.setClearColor(0x000000,0);
+    renderer.setRenderTarget(rt);
+    renderer.clear(true,true,false);
+    renderer.render(sc,cam);
+    renderer.readRenderTargetPixels(rt,0,0,W,H,buf);
+    renderer.setRenderTarget(null);
+    sc.remove(m);
+
+    // i pixel arrivano capovolti: li rimetto dritti
+    for(let y=0;y<H;y++){
+      const src=(H-1-y)*W*4, dst=y*W*4;
+      img.data.set(buf.subarray(src,src+W*4),dst);
+    }
+    const card=C(id);
+    const base=card.col!==undefined?card.col:0x2a6fb0;
+    const mix=(c,f)=>{const r=(c>>16&255),g=(c>>8&255),b=c&255;
+      return 'rgb('+Math.round(r+(255-r)*f)+','+Math.round(g+(255-g)*f)+','+Math.round(b+(255-b)*f)+')';};
+    const grad=cx.createLinearGradient(0,0,0,H);
+    grad.addColorStop(0,mix(base,.6)); grad.addColorStop(1,mix(base,.08));
+    cx.globalCompositeOperation='source-over';
+    cx.fillStyle=grad; cx.fillRect(0,0,W,H);
+    cx.fillStyle='rgba(255,255,255,.10)';
+    for(let i=-H;i<W;i+=22){ cx.save(); cx.translate(i,0); cx.rotate(.35); cx.fillRect(0,0,8,H*1.6); cx.restore(); }
+    // il personaggio sopra lo sfondo
+    const tmp=document.createElement('canvas'); tmp.width=W; tmp.height=H;
+    tmp.getContext('2d').putImageData(img,0,0);
+    cx.drawImage(tmp,0,0);
+    PORTRAIT[id]=cv.toDataURL();
+  });
+
+  if(clearOld && puoiSfondo) renderer.setClearColor(clearOld,alphaOld);
+  rt.dispose();
+  try{ renderCards(); }catch(e){}
 }
 
 function modelMesh(card,team){
@@ -1083,10 +1223,10 @@ function resetMatch(){
       const t=newTower(team,k,x,s*z);
       t.mesh=shipMesh(team,k);
       t.mesh.position.set(t.x,0,t.z);
-      t.bar=makeBar(k==='flag'?2.0:1.6, team===G.me?0x49e3a4:0xf06a4e);
+      t.bar=makeBar(k==='flag'?2.2:1.8, team===G.me?0x49e3a4:0xf06a4e);
       t.label=makeHpLabel();
-      t.label.position.set(t.x,(k==='flag'?2.5:2.0)+.62,t.z);
-      t.bar.position.set(t.x,k==='flag'?2.5:2.0,t.z); scene.add(t.bar);
+      t.label.position.set(t.x,(k==='flag'?4.6:3.6)+.55,t.z);
+      t.bar.position.set(t.x,k==='flag'?4.6:3.6,t.z); scene.add(t.bar);
       setBar(t.bar,1,team);
       G.towers.push(t);
     });
