@@ -222,7 +222,7 @@ input{width:100%;padding:12px;border-radius:10px;border:1px solid rgba(239,220,1
 // Per giocare online incolla qui la config del tuo progetto Firebase
 // (Realtime Database). Lasciando null funziona solo l'allenamento offline.
 const FIREBASE_CONFIG = null;
-const VERSION = 'v9';    // scritto in basso nel menu: serve a capire se il telefono
+const VERSION = 'v10';    // scritto in basso nel menu: serve a capire se il telefono
                          // ha davvero preso l'ultima versione o una in cache
 /* esempio:
 const FIREBASE_CONFIG = {
@@ -434,6 +434,46 @@ function crate(x,z,g){
   const c=part(gBox(.5,.45,.5),M(0xb0803f),x,.23,z,g); c.rotation.y=rnd(0,3);
 }
 
+// il contorno dell'arena: usa i modelli veri appena sono disponibili,
+// altrimenti ripiega sulle forme fatte a mano
+function buildDecor(){
+  if(MESH.decor){ scene.remove(MESH.decor); }
+  const d=new THREE.Group(); scene.add(d); MESH.decor=d;
+  const modello=(file,x,z,scala,ruota)=>{
+    const src=SCENA[file]; if(!src) return null;
+    const o=src.clone(true);
+    o.scale.setScalar(scala); o.position.set(x,0,z);
+    o.rotation.y=ruota===undefined?rnd(0,6.28):ruota;
+    d.add(o); return o;
+  };
+  [1,-1].forEach(s=>{
+    if(SCENA_OK){
+      modello('palma.glb',      -ARENA_W/2+.9, s*(RIVER+2.4), .115);
+      modello('palma-corta.glb', ARENA_W/2-.9, s*(RIVER+3.6), .105);
+      modello('palma.glb',      -ARENA_W/2+1.1,s*(ARENA_Z-2.6),.11);
+      modello('palma-corta.glb', ARENA_W/2-1.0,s*(ARENA_Z-4.0),.10);
+      modello('cassa.glb',      -ARENA_W/2+1.6,s*(ARENA_Z-6.0),.055);
+      modello('cassa.glb',      -ARENA_W/2+2.2,s*(ARENA_Z-6.4),.05);
+      modello('cassa.glb',       ARENA_W/2-1.8,s*(ARENA_Z-5.5),.055);
+      for(let i=0;i<6;i++)
+        modello('scoglio.glb', rnd(-ARENA_W/2+.7,ARENA_W/2-.7),s*rnd(RIVER+1,ARENA_Z-1), rnd(.035,.07));
+      for(let i=0;i<5;i++)
+        modello('scoglio.glb', s*rnd(1,1)*(ARENA_W/2+rnd(1.5,5)), s*rnd(2,ARENA_Z), rnd(.05,.11));
+    }else{
+      palm(-ARENA_W/2+.9,s*(RIVER+2.2),d,1);
+      palm(ARENA_W/2-.9,s*(RIVER+3.4),d,.85);
+      palm(-ARENA_W/2+1.1,s*(ARENA_Z-2.5),d,.9);
+      palm(ARENA_W/2-1.0,s*(ARENA_Z-3.8),d,1.05);
+      barrel(-ARENA_W/2+1.5,s*(ARENA_Z-6),d);
+      crate(ARENA_W/2-1.7,s*(ARENA_Z-5.5),d);
+      for(let i=0;i<7;i++){
+        const r=part(gSph(rnd(.2,.45),6,5),M(0x8e9a8a),rnd(-ARENA_W/2+.6,ARENA_W/2-.6),.1,s*rnd(RIVER+1,ARENA_Z-1),d);
+        r.scale.y=.6;
+      }
+    }
+  });
+}
+
 function buildArena(){
   const g=new THREE.Group(); scene.add(g); MESH.ground=g;
   const len=ARENA_Z-RIVER;
@@ -458,21 +498,7 @@ function buildArena(){
       for(let i=-2;i<=2;i++) part(gBox(.15,.55,.15),M(0x6b4526),x+s*(BRIDGE_W/2-.05),.3,i*1.1,g);
     });
   });
-  // decoro sulle isole
-  [1,-1].forEach(s=>{
-    palm(-ARENA_W/2+.9,s*(RIVER+2.2),g,1);
-    palm(ARENA_W/2-.9,s*(RIVER+3.4),g,.85);
-    palm(-ARENA_W/2+1.1,s*(ARENA_Z-2.5),g,.9);
-    palm(ARENA_W/2-1.0,s*(ARENA_Z-3.8),g,1.05);
-    barrel(-ARENA_W/2+1.5,s*(ARENA_Z-6),g);
-    barrel(-ARENA_W/2+2.1,s*(ARENA_Z-6.4),g);
-    crate(ARENA_W/2-1.7,s*(ARENA_Z-5.5),g);
-    crate(ARENA_W/2-2.3,s*(ARENA_Z-5.2),g);
-    for(let i=0;i<7;i++){
-      const r=part(gSph(rnd(.2,.45),6,5),M(0x8e9a8a),rnd(-ARENA_W/2+.6,ARENA_W/2-.6),.1,s*rnd(RIVER+1,ARENA_Z-1),g);
-      r.scale.y=.6;
-    }
-  });
+  buildDecor();
   // isole lontane: danno profondità dietro le navi
   for(let i=0;i<10;i++){
     const s=rnd(3,9), far=new THREE.Group(); scene.add(far);
@@ -529,7 +555,42 @@ function updateDeployZone(et){
 }
 
 /* --------------------------------- navi -------------------------------- */
+// nave vera (modello Kenney). La prua del modello punta verso -Z e lo scafo
+// è decentrato di 8 unità: correggo entrambe le cose qui dentro.
+function shipModel(team,kind){
+  const src=SCENA['nave.glb'];
+  if(!src) return null;
+  const big=kind==='flag';
+  const g=new THREE.Group();
+  const m=src.clone(true);
+  const sc=(big?3.9:2.8)/81;
+  m.scale.setScalar(sc);
+  m.position.z=8*sc;
+  g.add(m);
+
+  // vele e bandiere colorate per squadra, legno lasciato com'è
+  const teamCol=team===0?0x2fb3a3:0xc24534;
+  const vele=[];
+  const copia=x=>{ const c=x.clone();
+    if(/textile|_defaultMat/i.test(x.name||'')){ c.color.setHex(0xf2e6cc); vele.push(c); }
+    return c; };
+  m.traverse(o=>{
+    if(!o.isMesh||!o.material) return;
+    o.material = Array.isArray(o.material) ? o.material.map(copia) : copia(o.material);
+  });
+  // stendardo della squadra in cima all'albero
+  const flag=part(gPlane(big?1.1:.85,big?.7:.55),M(teamCol,{side:2}),0,(big?3.0:2.3),0,g);
+  flag.position.x=big?.55:.42;
+
+  const lamp=part(gSph(big?.16:.12,12,10),M(0xffd070,{em:0}),0,big?.95:.7,big?-1.5:-1.1,g);
+  g.userData.lamp=lamp; g.userData.vele=vele; g.userData.big=big; g.userData.team=team;
+  g.userData.rotY = team===0?0:Math.PI;          // la prua guarda l'avversario
+  g.rotation.y=g.userData.rotY;
+  scene.add(g); return g;
+}
+
 function shipMesh(team,kind){
+  if(SCENA_OK){ const mm=shipModel(team,kind); if(mm) return mm; }
   const g=new THREE.Group();
   const big=kind==='flag';
   const L=big?3.9:2.8, W=big?1.7:1.2, H=big?1.05:.75;
@@ -592,6 +653,8 @@ function shipMesh(team,kind){
   }
   hull.traverse(o=>{ if(o.isMesh && o.material!==OUT_MAT) o.castShadow=true; });
   g.userData.big=big; g.userData.team=team;
+  g.userData.rotY = team===0?Math.PI:0;
+  g.rotation.y=g.userData.rotY;
   scene.add(g); return g;
 }
 
@@ -828,17 +891,43 @@ const BASE=['_Body','_Head','_ArmLeft','_ArmRight','_LegLeft','_LegRight','_Head
 // corpo, scala, parti extra da mostrare, animazione d'attacco, accessori
 const ALT_MODELLO=2.25;          // altezza del corpo (armi escluse) nelle unità del modello
 const MODELLI={
-  0:{f:'barbarian.glb',   s:.62, extra:[],                              atk:'Unarmed_Melee_Attack_Punch_A', cappello:true},
-  1:{f:'knight.glb',      s:.60, extra:['1H_Sword','1H_Sword_Offhand'], atk:'1H_Melee_Attack_Slice_Diagonal'},
-  2:{f:'rogue.glb',       s:.58, extra:[],                              atk:'Unarmed_Melee_Attack_Kick'},
-  3:{f:'mage.glb',        s:.56, extra:['1H_Wand','Mage_Hat'],          atk:'Spellcast_Shoot'},
-  4:{f:'rogue-hooded.glb',s:.58, extra:['2H_Crossbow'],                 atk:'1H_Ranged_Shoot', naso:true},
-  5:{f:'knight.glb',      s:.85, extra:['Knight_Helmet','2H_Sword'],    atk:'2H_Melee_Attack_Chop'},
-  6:{f:'rogue.glb',       s:.46, extra:['Knife'],                       atk:'1H_Melee_Attack_Slice_Diagonal'},
-  8:{f:'barbarian.glb',   s:.52, extra:['Barbarian_Hat'],               atk:'Unarmed_Melee_Attack_Punch_A'},
-  9:{f:'rogue-hooded.glb',s:.60, extra:['Knife'],                       atk:'1H_Melee_Attack_Slice_Diagonal'},
-  10:{f:'mage.glb',       s:.56, extra:['1H_Wand'],                     atk:'Spellcast_Shoot'}
+  0:{f:'barbarian.glb',   s:.88, extra:[],                              atk:'Unarmed_Melee_Attack_Punch_A', cappello:true},
+  1:{f:'knight.glb',      s:.86, extra:['1H_Sword','1H_Sword_Offhand'], atk:'1H_Melee_Attack_Slice_Diagonal'},
+  2:{f:'rogue.glb',       s:.84, extra:[],                              atk:'Unarmed_Melee_Attack_Kick'},
+  3:{f:'mage.glb',        s:.80, extra:['1H_Wand','Mage_Hat'],          atk:'Spellcast_Shoot'},
+  4:{f:'rogue-hooded.glb',s:.84, extra:['2H_Crossbow'],                 atk:'1H_Ranged_Shoot', naso:true},
+  5:{f:'knight.glb',      s:1.18, extra:['Knight_Helmet','2H_Sword'],    atk:'2H_Melee_Attack_Chop'},
+  6:{f:'rogue.glb',       s:.66, extra:['Knife'],                       atk:'1H_Melee_Attack_Slice_Diagonal'},
+  8:{f:'barbarian.glb',   s:.74, extra:['Barbarian_Hat'],               atk:'Unarmed_Melee_Attack_Punch_A'},
+  9:{f:'rogue-hooded.glb',s:.86, extra:['Knife'],                       atk:'1H_Melee_Attack_Slice_Diagonal'},
+  10:{f:'mage.glb',       s:.80, extra:['1H_Wand'],                     atk:'Spellcast_Shoot'}
 };
+
+let SCENA_OK=false;
+const SCENA={};
+const SCENA_FILE=['nave.glb','palma.glb','palma-corta.glb','scoglio.glb','cassa.glb'];
+
+function loadScena(){
+  if(typeof THREE.GLTFLoader!=='function') return;
+  const L=new THREE.GLTFLoader();
+  let restano=SCENA_FILE.length, rotto=false;
+  SCENA_FILE.forEach(f=>L.load(f, g=>{
+    g.scene.traverse(o=>{ if(o.isMesh){ o.castShadow=true; o.receiveShadow=true; } });
+    SCENA[f]=g.scene;
+    if(--restano===0 && !rotto){ SCENA_OK=true; buildDecor(); rifaiNavi(); }
+  }, undefined, ()=>{ rotto=true; }));
+}
+
+// le navi esistono già quando i modelli finiscono di scaricarsi: le rifaccio
+function rifaiNavi(){
+  if(!G.towers.length) return;
+  G.towers.forEach(t=>{
+    if(t.mesh) scene.remove(t.mesh);
+    t.mesh=shipMesh(t.team,t.kind);
+    t.mesh.position.set(t.x,0,t.z);
+  });
+  updateShipMaterials();
+}
 
 function loadModels(){
   if(typeof THREE.GLTFLoader!=='function'){ MODEL_STATO='manca GLTFLoader.js'; return; }
@@ -994,7 +1083,6 @@ function resetMatch(){
       const t=newTower(team,k,x,s*z);
       t.mesh=shipMesh(team,k);
       t.mesh.position.set(t.x,0,t.z);
-      t.mesh.rotation.y = team===0?Math.PI:0;
       t.bar=makeBar(k==='flag'?2.0:1.6, team===G.me?0x49e3a4:0xf06a4e);
       t.label=makeHpLabel();
       t.label.position.set(t.x,(k==='flag'?2.5:2.0)+.62,t.z);
@@ -1386,7 +1474,7 @@ function syncMeshes(dt){
       const k=Math.min(1,t.sinking/2.2);
       t.mesh.rotation.z=(t.x<0?1:-1)*k*.9;
       t.mesh.position.y=-k*k*3.2;
-      t.mesh.rotation.y=(t.team===0?Math.PI:0)+k*.3;
+      t.mesh.rotation.y=(t.mesh.userData.rotY||0)+k*.3;
       if(t.sinking<1.6 && Math.random()<dt*9) puff(t.x+rnd(-1.5,1.5),t.z+rnd(-2,2),0x9fd8ff,.9);
       if(k>=1){ t.mesh.visible=false; }
       continue;
@@ -1499,7 +1587,9 @@ function updateShipMaterials(){
       lamp.material.color.setHex(on?0xffd070:0x4a4234);
     }
     // vele ammainate finché l'ammiraglia dorme
-    t.mesh.traverse(o=>{
+    const vele=t.mesh.userData.vele;
+    if(vele){ vele.forEach(c=>c.color.setHex(on?0xf2e6cc:0x9b9074)); }
+    else t.mesh.traverse(o=>{
       if(o.name&&o.name.indexOf('sail')===0){
         if(!o.userData.own){ o.material=o.material.clone(); o.userData.own=true; }
         o.material.color.setHex(on?0xf4e9cf:0x9b9074);
@@ -2038,6 +2128,7 @@ function verTag(){
 init3D();
 loadStats();
 loadModels();
+loadScena();
 verTag();
 document.getElementById('codeIn').addEventListener('input',e=>{e.target.value=e.target.value.toUpperCase();});
 if('serviceWorker' in navigator && location.protocol.startsWith('http')){

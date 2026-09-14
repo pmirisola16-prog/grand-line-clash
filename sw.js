@@ -1,10 +1,11 @@
 // Alza il numero di versione a ogni deploy: forza l'aggiornamento sui telefoni
 // dove l'app è già installata.
-const CACHE = 'grandline-v9';
+const CACHE = 'grandline-v10';
 const FILES = ['./', './index.html', './manifest.json', './personaggi.csv',
                './icon-192.png', './icon-512.png', './icon-maskable-512.png',
                './GLTFLoader.js', './SkeletonUtils.js', './animazioni.glb',
-               './knight.glb', './rogue.glb', './rogue-hooded.glb', './barbarian.glb', './mage.glb'];
+               './knight.glb', './rogue.glb', './rogue-hooded.glb', './barbarian.glb', './mage.glb',
+               './nave.glb', './palma.glb', './palma-corta.glb', './scoglio.glb', './cassa.glb'];
 
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(FILES)).then(() => self.skipWaiting()));
