@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<meta name="theme-color" content="#07202e">
+<title>Prova modelli — Grand Line Clash</title>
+<style>
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;overflow:hidden;background:#07202e;color:#efdcb4;
+  font-family:Inter,system-ui,sans-serif;touch-action:none}
+canvas{position:fixed;inset:0;width:100%;height:100%}
+#ui{position:fixed;left:0;right:0;bottom:0;padding:10px 10px calc(env(safe-area-inset-bottom,0px) + 10px);
+  background:linear-gradient(180deg,transparent,rgba(4,18,26,.92) 30%)}
+.row{display:flex;gap:6px;flex-wrap:wrap;justify-content:center;margin-bottom:7px}
+button{font:700 12px Inter,sans-serif;padding:9px 11px;border-radius:9px;border:1px solid #9a6f13;
+  background:linear-gradient(180deg,#e8b23c,#b57b12);color:#2b1a00}
+button.g{background:rgba(7,26,36,.8);color:#efdcb4;border-color:rgba(239,220,180,.35)}
+button.on{background:linear-gradient(180deg,#6fe3d0,#1f9d8c);color:#04262a;border-color:#1f9d8c}
+#top{position:fixed;top:0;left:0;right:0;padding:calc(env(safe-area-inset-top,0px) + 10px) 12px 10px;
+  font-size:12px;text-align:center;background:linear-gradient(180deg,rgba(4,18,26,.9),transparent)}
+#top b{font-size:15px;display:block;margin-bottom:2px}
+#msg{position:fixed;top:44%;left:0;right:0;text-align:center;font-size:14px;padding:0 30px;line-height:1.6}
+#hint{font-size:10.5px;opacity:.55;text-align:center;margin-top:2px}
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div id="top"><b id="who">Caricamento…</b><span id="info"></span></div>
+<div id="msg">Sto scaricando i modelli…</div>
+<div id="ui" style="display:none">
+  <div class="row" id="rowChar"></div>
+  <div class="row" id="rowAnim"></div>
+  <div class="row">
+    <button class="g" id="btTeam">Squadra: verde</button>
+    <button class="g" id="btHat">Cappello: no</button>
+    <button class="g" id="btAll">Vedi tutti</button>
+  </div>
+  <div id="hint">Trascina per girare attorno · pizzica per zoomare</div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="GLTFLoader.js"></script>
+<script src="SkeletonUtils.js"></script>
+<script>
+/* Pagina di prova: serve solo a decidere se questi modelli ci piacciono.
+   Non è il gioco, è la vetrina. */
+
+const CORPI=[
+  {file:'knight.glb',       nome:'Cavaliere',  idea:'Franky (corazzato, massiccio)'},
+  {file:'barbarian.glb',    nome:'Barbaro',    idea:'Rufy (torso nudo, energico)'},
+  {file:'rogue.glb',        nome:'Ladro',      idea:'Zoro / Ciurma (agile, con spada)'},
+  {file:'rogue-hooded.glb', nome:'Incappucciato', idea:'Sanji / Usop'},
+  {file:'mage.glb',         nome:'Mago',       idea:'Nami / Robin (a distanza)'}
+];
+const ANIM=[
+  ['Walking_A','Cammina'],
+  ['Idle','Fermo'],
+  ['Unarmed_Melee_Attack_Punch_A','Pugno'],
+  ['1H_Melee_Attack_Slice_Diagonal','Spada'],
+  ['Unarmed_Melee_Attack_Kick','Calcio'],
+  ['2H_Melee_Attack_Chop','Fendente'],
+  ['1H_Ranged_Shoot','Tiro'],
+  ['Spellcast_Shoot','Magia'],
+  ['Death_A','Morte']
+];
+const SCALA=0.46;          // dal formato del modello alla scala del campo di gioco
+
+let renderer,scene,camera,clock,mixerList=[],attori=[],clips={},corpi={};
+let selChar=1, selAnim='Walking_A', team=0, hat=false, tutti=false;
+let orbit={a:0.0,p:0.92,d:7,dragging:false,lx:0,ly:0,pd:0};
+
+init();
+
+function init(){
+  renderer=new THREE.WebGLRenderer({canvas:document.getElementById('c'),antialias:true});
+  renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+  renderer.outputEncoding=THREE.sRGBEncoding;
+  renderer.shadowMap.enabled=true; renderer.shadowMap.type=THREE.PCFSoftShadowMap;
+
+  scene=new THREE.Scene();
+  scene.background=new THREE.Color(0x8fd3e8);
+  scene.fog=new THREE.Fog(0x8fd3e8,22,60);
+  camera=new THREE.PerspectiveCamera(42,1,.1,200);
+
+  scene.add(new THREE.HemisphereLight(0xcdeeff,0x3a5a42,.9));
+  const sun=new THREE.DirectionalLight(0xfff2d4,1.2); sun.position.set(-6,10,6);
+  sun.castShadow=true; sun.shadow.mapSize.width=1024; sun.shadow.mapSize.height=1024;
+  sun.shadow.camera.left=-8; sun.shadow.camera.right=8; sun.shadow.camera.top=8; sun.shadow.camera.bottom=-8;
+  scene.add(sun);
+
+  const suolo=new THREE.Mesh(new THREE.CircleGeometry(14,40),
+    new THREE.MeshStandardMaterial({color:0x6b9a3f,roughness:1}));
+  suolo.rotation.x=-Math.PI/2; suolo.receiveShadow=true; scene.add(suolo);
+  const sabbia=new THREE.Mesh(new THREE.RingGeometry(14,17,40),
+    new THREE.MeshStandardMaterial({color:0xd9c48e,roughness:1}));
+  sabbia.rotation.x=-Math.PI/2; sabbia.position.y=-.01; scene.add(sabbia);
+
+  clock=new THREE.Clock();
+  addEventListener('resize',resize); resize();
+  gesti();
+  carica();
+  renderer.setAnimationLoop(loop);
+}
+
+function resize(){
+  renderer.setSize(innerWidth,innerHeight,false);
+  camera.aspect=innerWidth/innerHeight; camera.updateProjectionMatrix();
+}
+
+/* ------------------------------ caricamento ---------------------------- */
+function carica(){
+  const t0=performance.now();
+  const loader=new THREE.GLTFLoader();
+  const msg=document.getElementById('msg');
+  let fatti=0;
+  const totale=CORPI.length+1;
+  const avanti=()=>{ msg.textContent='Scaricati '+(++fatti)+' di '+totale+' file…'; };
+
+  const errore=e=>{
+    msg.innerHTML='Non riesco a caricare i modelli.<br><br>'+
+      'Controlla che i file .glb e i due .js stiano nella stessa cartella di questa pagina, '+
+      'e che tu la stia aprendo dal link di GitHub e non da un file sul telefono.';
+    console.error(e);
+  };
+
+  loader.load('animazioni.glb', g=>{
+    g.animations.forEach(c=>clips[c.name]=c);
+    avanti(); forse(t0);
+  }, undefined, errore);
+
+  CORPI.forEach((c,i)=>{
+    loader.load(c.file, g=>{
+      const root=g.scene;
+      root.traverse(o=>{ if(o.isMesh||o.isSkinnedMesh){ o.castShadow=true; o.frustumCulled=false; } });
+      corpi[c.file]=root;
+      avanti(); forse(t0);
+    }, undefined, errore);
+  });
+}
+
+function forse(t0){
+  if(Object.keys(corpi).length<CORPI.length || !clips['Walking_A']) return;
+  document.getElementById('msg').style.display='none';
+  document.getElementById('ui').style.display='block';
+  const kb=Math.round((310+320+364+307+308+96+12));
+  document.getElementById('info').textContent=
+    'caricati in '+((performance.now()-t0)/1000).toFixed(1)+' s · circa '+kb+' KB in tutto';
+  bottoni();
+  mostra();
+}
+
+/* --------------------------- costruzione attori ------------------------ */
+function nuovo(file,x){
+  const m=THREE.SkeletonUtils.clone(corpi[file]);
+  m.scale.setScalar(SCALA);
+  m.position.set(x,0,0);
+  // tinta squadra: il modello ha una sola texture, la coloro sopra
+  m.traverse(o=>{
+    if(o.isMesh||o.isSkinnedMesh){
+      o.material=o.material.clone();
+      o.material.color.setHex(team===0?0xa8f0e0:0xffa08c);
+    }
+  });
+  // pedana della squadra, come nel gioco
+  const anello=new THREE.Mesh(new THREE.RingGeometry(.42,.6,24),
+    new THREE.MeshBasicMaterial({color:team===0?0x2fb3a3:0xc24534,transparent:true,opacity:.85}));
+  anello.rotation.x=-Math.PI/2; anello.position.set(x,.02,0); scene.add(anello);
+
+  if(hat) cappello(m);
+  scene.add(m);
+  const mix=new THREE.AnimationMixer(m);
+  mixerList.push(mix);
+  attori.push({m,mix,anello});
+  suona(mix);
+  return m;
+}
+
+// prova che gli oggetti si possono attaccare alle ossa: cappello di paglia in testa
+function cappello(m){
+  const testa=m.getObjectByName('head');
+  if(!testa) return;
+  const g=new THREE.Group();
+  const paglia=new THREE.MeshStandardMaterial({color:0xe9cf8c,roughness:.9,flatShading:true});
+  const tesa=new THREE.Mesh(new THREE.CylinderGeometry(.62,.66,.06,18),paglia);
+  const coppa=new THREE.Mesh(new THREE.CylinderGeometry(.36,.4,.34,18),paglia);
+  coppa.position.y=.18;
+  const nastro=new THREE.Mesh(new THREE.CylinderGeometry(.41,.41,.1,18),
+    new THREE.MeshStandardMaterial({color:0xb8342a,roughness:.9}));
+  nastro.position.y=.08;
+  g.add(tesa); g.add(coppa); g.add(nastro);
+  g.position.y=.28;                    // sopra l'osso della testa
+  g.traverse(o=>o.castShadow=true);
+  testa.add(g);
+}
+
+function suona(mix){
+  const clip=clips[selAnim]||clips['Idle'];
+  if(!clip) return;
+  mix.stopAllAction();
+  const a=mix.clipAction(clip);
+  if(selAnim==='Death_A'){ a.setLoop(THREE.LoopOnce); a.clampWhenFinished=true; }
+  a.reset().play();
+}
+
+function pulisci(){
+  attori.forEach(a=>{ scene.remove(a.m); scene.remove(a.anello); });
+  attori=[]; mixerList=[];
+}
+
+function mostra(){
+  pulisci();
+  if(tutti){
+    CORPI.forEach((c,i)=>nuovo(c.file,(i-(CORPI.length-1)/2)*1.7));
+    orbit.d=9;
+    document.getElementById('who').textContent='Tutti e cinque';
+  }else{
+    nuovo(CORPI[selChar].file,0);
+    orbit.d=5.2;
+    document.getElementById('who').textContent=CORPI[selChar].nome+' — '+CORPI[selChar].idea;
+  }
+  bottoni();
+}
+
+/* -------------------------------- comandi ------------------------------ */
+function bottoni(){
+  const rc=document.getElementById('rowChar'); rc.innerHTML='';
+  CORPI.forEach((c,i)=>{
+    const b=document.createElement('button');
+    b.className='g'+(!tutti&&selChar===i?' on':''); b.textContent=c.nome;
+    b.onclick=()=>{ selChar=i; tutti=false; mostra(); };
+    rc.appendChild(b);
+  });
+  const ra=document.getElementById('rowAnim'); ra.innerHTML='';
+  ANIM.forEach(([k,et])=>{
+    const b=document.createElement('button');
+    b.className='g'+(selAnim===k?' on':''); b.textContent=et;
+    b.onclick=()=>{ selAnim=k; mixerList.forEach(suona); bottoni(); };
+    ra.appendChild(b);
+  });
+  document.getElementById('btTeam').textContent='Squadra: '+(team===0?'verde':'rossa');
+  document.getElementById('btHat').textContent='Cappello: '+(hat?'sì':'no');
+  document.getElementById('btAll').className='g'+(tutti?' on':'');
+}
+document.getElementById('btTeam').onclick=()=>{ team=1-team; mostra(); };
+document.getElementById('btHat').onclick=()=>{ hat=!hat; mostra(); };
+document.getElementById('btAll').onclick=()=>{ tutti=!tutti; mostra(); };
+
+function gesti(){
+  const cv=document.getElementById('c');
+  cv.addEventListener('pointerdown',e=>{orbit.dragging=true;orbit.lx=e.clientX;orbit.ly=e.clientY;});
+  addEventListener('pointerup',()=>orbit.dragging=false);
+  addEventListener('pointermove',e=>{
+    if(!orbit.dragging) return;
+    orbit.a-=(e.clientX-orbit.lx)*.008;
+    orbit.p=Math.max(.25,Math.min(1.4,orbit.p-(e.clientY-orbit.ly)*.005));
+    orbit.lx=e.clientX; orbit.ly=e.clientY;
+  });
+  cv.addEventListener('touchmove',e=>{
+    if(e.touches.length!==2) return;
+    const d=Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY);
+    if(orbit.pd) orbit.d=Math.max(2.5,Math.min(16,orbit.d-(d-orbit.pd)*.02));
+    orbit.pd=d;
+  },{passive:true});
+  cv.addEventListener('touchend',()=>orbit.pd=0);
+  addEventListener('wheel',e=>{orbit.d=Math.max(2.5,Math.min(16,orbit.d+e.deltaY*.004));},{passive:true});
+}
+
+function loop(){
+  const dt=Math.min(clock.getDelta(),.05);
+  mixerList.forEach(m=>m.update(dt));
+  camera.position.set(
+    Math.sin(orbit.a)*Math.cos(orbit.p)*orbit.d,
+    Math.sin(orbit.p)*orbit.d+.4,
+    Math.cos(orbit.a)*Math.cos(orbit.p)*orbit.d);
+  camera.lookAt(0,.75,0);
+  renderer.render(scene,camera);
+}
+</script>
+</body>
+</html>
